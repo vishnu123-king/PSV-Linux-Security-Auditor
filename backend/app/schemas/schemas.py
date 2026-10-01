@@ -127,8 +127,8 @@ class HostResponse(BaseSchema):
 class HostTestResult(BaseModel):
     success: bool
     message: str
-    host_id: str
-    hostname: str
+    host_id: Optional[str] = None
+    hostname: Optional[str] = None
     latency_ms: Optional[float] = None
     banner: Optional[str] = None
     fingerprint: Optional[str] = None

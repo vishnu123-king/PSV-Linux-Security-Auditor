@@ -51,17 +51,32 @@ class EventBus:
             self._is_memory_mode = True
             self._consumer_task = asyncio.create_task(self._process_memory_queue())
 
-    async def publish_assessment_job(self, assessment_id: str, host_id: str, profile_id: str) -> None:
+    async def publish_assessment_job(
+        self,
+        assessment_id: Any,
+        host_id: Optional[str] = None,
+        profile_id: Optional[str] = None
+    ) -> None:
+        if isinstance(assessment_id, dict):
+            payload_data = assessment_id
+            assessment_id_val = str(payload_data.get("assessment_id", ""))
+            host_id_val = str(payload_data.get("host_id", ""))
+            profile_id_val = str(payload_data.get("profile_id", ""))
+        else:
+            assessment_id_val = str(assessment_id)
+            host_id_val = str(host_id or "")
+            profile_id_val = str(profile_id or "")
+
         payload = {
             "type": "assessment.run",
-            "assessment_id": assessment_id,
-            "host_id": host_id,
-            "profile_id": profile_id
+            "assessment_id": assessment_id_val,
+            "host_id": host_id_val,
+            "profile_id": profile_id_val
         }
 
         if self._is_memory_mode or not self._channel:
             await self._memory_queue.put(payload)
-            logger.info(f"Enqueued assessment job {assessment_id} in local memory queue.")
+            logger.info(f"Enqueued assessment job {assessment_id_val} in local memory queue.")
             return
 
         try:
@@ -74,7 +89,7 @@ class EventBus:
                 message,
                 routing_key=self.settings.RABBITMQ_QUEUE_NAME
             )
-            logger.info(f"Published assessment job {assessment_id} to RabbitMQ queue {self.settings.RABBITMQ_QUEUE_NAME}.")
+            logger.info(f"Published assessment job {assessment_id_val} to RabbitMQ queue {self.settings.RABBITMQ_QUEUE_NAME}.")
         except Exception as e:
             logger.error(f"Failed to publish to RabbitMQ, enqueuing locally: {e}")
             await self._memory_queue.put(payload)
