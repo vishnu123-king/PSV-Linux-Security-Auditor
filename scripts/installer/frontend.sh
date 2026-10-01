@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PSV Linux Security Auditor - Frontend Build Module
-# Installs node dependencies, runs linter and builds static assets in frontend/dist.
+# Installs node dependencies and builds static assets in dist.
 
 set -Eeuo pipefail
 
@@ -9,12 +9,6 @@ source "${MODULE_DIR}/common.sh"
 
 build_frontend() {
     local install_dir="$1"
-    local frontend_dir="${install_dir}/frontend"
-
-    if [ ! -d "${frontend_dir}" ]; then
-        log_info "No frontend directory found at '${frontend_dir}'. Skipping frontend build."
-        return 0
-    fi
 
     log_info "Building frontend static assets..."
 
@@ -23,26 +17,23 @@ build_frontend() {
         return 0
     fi
 
-    cd "${frontend_dir}"
+    cd "${install_dir}"
 
-    if [ -f "package-lock.json" ]; then
-        log_info "Installing Node modules with 'npm ci'..."
-        npm ci --quiet
-    else
-        log_info "Installing Node modules with 'npm install'..."
-        npm install --quiet
+    if [ ! -f "${install_dir}/package.json" ]; then
+        log_warn "package.json not found in '${install_dir}'. Skipping frontend build."
+        return 0
     fi
 
-    log_info "Linting frontend codebase..."
-    npm run lint || log_warn "Frontend linting reported warnings."
+    log_info "Installing Node dependencies..."
+    npm install --quiet
 
-    log_info "Building production frontend assets..."
+    log_info "Building production frontend assets with Vite..."
     npm run build
 
-    if [ ! -d "${frontend_dir}/dist" ]; then
-        die "Frontend build failed. Directory '${frontend_dir}/dist' was not created."
+    if [ ! -d "${install_dir}/dist" ]; then
+        die "Frontend build failed. Directory '${install_dir}/dist' was not created."
     fi
 
-    log_info "Frontend build completed successfully."
+    log_info "Frontend static assets compiled successfully in '${install_dir}/dist'."
     update_state "frontend_built" "completed"
 }

@@ -37,7 +37,7 @@ server {
 
     # Static Frontend Assets
     location / {
-        root ${install_dir}/frontend/dist;
+        root ${install_dir}/dist;
         try_files \$uri \$uri/ /index.html;
         expires 1d;
         add_header Cache-Control "public, no-transform";
