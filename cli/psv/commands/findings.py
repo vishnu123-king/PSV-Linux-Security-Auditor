@@ -41,6 +41,10 @@ def list_findings(
             print_json(findings)
             return
 
+        if not findings:
+            console.print("[dim]No findings available.[/dim]")
+            return
+
         table = create_table(["ID", "Severity", "Rule ID", "Title", "Control", "Status"], title="Security Findings")
         for f in findings:
             table.add_row(

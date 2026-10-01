@@ -10,23 +10,52 @@ from psv.output import (
     print_json,
     print_panel,
     print_success,
+    print_warning,
 )
 
 app = typer.Typer(help="Execute and inspect security assessments")
 
 
+def resolve_host_id(host_query: str) -> str:
+    """Resolves a host name or ID prefix to an exact Host ID."""
+    try:
+        hosts = psv_client.request("GET", "/hosts")
+        for h in hosts:
+            if h["id"] == host_query or h["id"].startswith(host_query) or h["name"].lower() == host_query.lower():
+                return h["id"]
+    except Exception:
+        pass
+    return host_query
+
+
 @app.command("list")
 def list_audits(
-    host_id: Optional[str] = typer.Option(None, "--host", "-h", help="Filter by host ID"),
+    host: Optional[str] = typer.Option(None, "--host", "-h", help="Filter by host ID or host name"),
+    status: Optional[str] = typer.Option(None, "--status", "-s", help="Filter by status (QUEUED, RUNNING, COMPLETED, FAILED)"),
+    limit: Optional[int] = typer.Option(None, "--limit", "-l", help="Limit number of assessments returned"),
     format: str = typer.Option("table", "--format", "-f")
 ):
     """List historical and active security audits."""
     try:
-        params = {"host_id": host_id} if host_id else {}
+        host_id = resolve_host_id(host) if host else None
+        params = {}
+        if host_id:
+            params["host_id"] = host_id
+        if status:
+            params["status"] = status
+
         audits = psv_client.request("GET", "/assessments", params=params)
+
+        if limit and isinstance(audits, list):
+            audits = audits[:limit]
 
         if format == "json":
             print_json(audits)
+            return
+
+        if not audits:
+            console.print("[dim]No assessments found.[/dim]")
+            console.print("Run [bold cyan]psv audit run <host_id>[/bold cyan] to execute a security assessment.")
             return
 
         table = create_table(
@@ -54,15 +83,16 @@ def list_audits(
 
 @app.command("run")
 def run_audit(
-    host_id: str = typer.Argument(..., help="Host ID to audit"),
+    host_id: str = typer.Argument(..., help="Host ID, prefix, or name to audit"),
     profile: str = typer.Option("cis-linux-server", "--profile", "-p", help="Security profile ID"),
     wait: bool = typer.Option(True, "--wait/--no-wait", help="Block and stream progress until complete"),
     format: str = typer.Option("table", "--format", "-f")
 ):
     """Trigger a new security assessment job against a target host."""
     try:
+        resolved_id = resolve_host_id(host_id)
         payload = {
-            "host_id": host_id,
+            "host_id": resolved_id,
             "profile_id": profile,
             "triggered_by": "cli"
         }
@@ -73,10 +103,11 @@ def run_audit(
             if format == "json":
                 print_json(res)
             else:
-                print_success(f"Assessment enqueued: {assessment_id} (Status: {res['status']})")
+                print_success(f"Assessment enqueued: {assessment_id[:8]} (Status: {res['status']})")
+                console.print(f"Run [bold cyan]psv audit status {assessment_id[:8]}[/bold cyan] to check status.")
             return
 
-        console.print(f"[bold cyan]▶[/bold cyan] Assessment initiated: [bold]{assessment_id}[/bold]. Streaming execution status...")
+        console.print(f"[bold cyan]▶[/bold cyan] Assessment initiated: [bold]{assessment_id[:8]}[/bold]. Streaming execution status...")
 
         # Poll status until complete or failed
         last_progress = -1
@@ -113,6 +144,7 @@ def run_audit(
   [yellow]MEDIUM:[/yellow]   {current.get('medium_count', 0)}
   [blue]LOW:[/blue]      {current.get('low_count', 0)}"""
                     print_panel(summary_box, title=f"Audit Summary #{assessment_id[:8]}")
+                    console.print(f"Run [bold cyan]psv finding list --assessment {assessment_id[:8]}[/bold cyan] to view detailed findings.")
                 else:
                     print_error(f"Assessment terminated in state: {st}. Error: {current.get('error_message')}")
                 break
@@ -126,7 +158,7 @@ def run_audit(
 
 @app.command("status")
 def audit_status(
-    assessment_id: str = typer.Argument(..., help="Assessment ID"),
+    assessment_id: str = typer.Argument(..., help="Assessment ID or prefix"),
     format: str = typer.Option("table", "--format", "-f")
 ):
     """Inspect state and results of a specific assessment."""

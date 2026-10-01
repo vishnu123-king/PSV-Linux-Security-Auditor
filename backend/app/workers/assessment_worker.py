@@ -9,6 +9,7 @@ from backend.app.collectors.base import CollectorResult, ExecutionContext, Obser
 from backend.app.core.config import get_settings
 from backend.app.core.database import async_session_factory
 from backend.app.core.event_bus import event_bus
+from backend.app.engine.local_context import LocalExecutionContext
 from backend.app.engine.rule_engine import RuleEngine
 from backend.app.engine.rule_loader import rule_loader
 from backend.app.engine.ssh import SSHExecutionContext
@@ -242,18 +243,18 @@ class AssessmentOrchestrator:
             })
 
             # 2. Establish Execution Context
-            is_mock_target = (
-                host.hostname in ["localhost", "127.0.0.1", "test-target", "mock-target"] or
-                host.tags.get("simulated") is True or
-                credential is None
-            )
+            is_simulated = bool(host.tags.get("simulated") is True)
+            is_local = bool(host.tags.get("local") is True or host.tags.get("connector") == "local" or (host.hostname in ["localhost", "127.0.0.1"] and not credential))
 
             ctx: ExecutionContext
             ssh_ctx: Optional[SSHExecutionContext] = None
 
-            if is_mock_target:
-                logger.info(f"Target '{host.hostname}' evaluated using isolated test environment.")
+            if is_simulated:
+                logger.info(f"Target '{host.hostname}' evaluated using simulated test environment.")
                 ctx = SimulatedTargetExecutionContext(hostname=host.hostname)
+            elif is_local:
+                logger.info(f"Auditing local machine '{host.hostname}' using LocalExecutionContext.")
+                ctx = LocalExecutionContext(hostname=host.hostname)
             else:
                 try:
                     ssh_ctx = SSHExecutionContext(
@@ -262,7 +263,7 @@ class AssessmentOrchestrator:
                         username=credential.username if credential else "root",
                         client_keys=[credential.encrypted_secret] if credential and credential.auth_type == "ssh_key" else None,
                         password=credential.encrypted_secret if credential and credential.auth_type == "password" else None,
-                        known_hosts="ignore" if host.tags.get("skip_host_key_verify") else "known_hosts"
+                        known_hosts="ignore" if host.tags.get("skip_host_key_verify") or host.tags.get("test") else "known_hosts"
                     )
                     await ssh_ctx.connect()
                     ctx = ssh_ctx

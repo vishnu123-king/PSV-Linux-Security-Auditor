@@ -28,7 +28,7 @@ settings = get_settings()
 
 
 async def seed_initial_data() -> None:
-    """Seeds baseline organization, initial administrator user, and default targets."""
+    """Seeds baseline organization and initial administrator user if not existing."""
     async with async_session_factory() as db:
         # Check if organization exists
         org_res = await db.execute(select(Organization).limit(1))
@@ -53,42 +53,7 @@ async def seed_initial_data() -> None:
             db.add(admin)
             await db.flush()
 
-        # Seed a test Linux host if no hosts exist
-        host_res = await db.execute(select(Host).limit(1))
-        host = host_res.scalar_one_or_none()
-        if not host:
-            test_host = Host(
-                organization_id=org.id,
-                name="production-gateway-01",
-                hostname="127.0.0.1",
-                port=22,
-                environment="production",
-                tags={"role": "edge-gateway", "simulated": True, "environment": "cloud-vpc"},
-                os_family="debian",
-                os_distribution="Ubuntu",
-                os_version="24.04 LTS",
-                kernel_version="6.8.0-31-generic",
-                arch="x86_64",
-                is_active=True
-            )
-            db.add(test_host)
-
-            test_host2 = Host(
-                organization_id=org.id,
-                name="payments-api-worker",
-                hostname="test-target",
-                port=2222,
-                environment="staging",
-                tags={"role": "worker", "simulated": True, "compliance": "pci-dss"},
-                os_family="debian",
-                os_distribution="Debian",
-                os_version="12.5 (bookworm)",
-                kernel_version="6.1.0-21-amd64",
-                arch="x86_64",
-                is_active=True
-            )
-            db.add(test_host2)
-
+        # Database starts clean with 0 hosts, 0 assessments, 0 findings
         await db.commit()
 
 

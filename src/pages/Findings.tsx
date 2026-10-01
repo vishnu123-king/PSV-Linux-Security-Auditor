@@ -89,8 +89,21 @@ export const Findings: React.FC<FindingsProps> = ({ findings, onRefresh, onPlanR
       </div>
 
       {/* Findings List */}
-      <div className="space-y-3">
-        {filtered.map((f) => {
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl bg-slate-900 border border-slate-800 p-12 text-center space-y-2">
+          <ShieldAlert className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+          <h3 className="text-sm font-semibold text-white">
+            {findings.length === 0 ? 'No findings available' : 'No findings match filter'}
+          </h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            {findings.length === 0
+              ? 'Run a security assessment on an authorized target to detect compliance discrepancies.'
+              : 'Try clearing the search query or adjusting the severity filter.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((f) => {
           const isExpanded = expandedFindingId === f.id;
           return (
             <div
@@ -209,7 +222,8 @@ export const Findings: React.FC<FindingsProps> = ({ findings, onRefresh, onPlanR
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

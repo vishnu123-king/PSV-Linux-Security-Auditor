@@ -19,7 +19,7 @@ import { api } from './api/client';
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavItem>('dashboard');
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
-  const [serverStatus, setServerStatus] = useState<'connected' | 'simulated'>('simulated');
+  const [serverStatus, setServerStatus] = useState<'connected' | 'simulated'>('connected');
 
   const [hosts, setHosts] = useState<Host[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -36,7 +36,7 @@ export const App: React.FC = () => {
       setAssessments(a || []);
       setFindings(f || []);
     } catch {
-      // Handled by client fallback
+      // API error handled
     }
   };
 
@@ -44,11 +44,11 @@ export const App: React.FC = () => {
     loadData();
 
     // Check if real FastAPI backend is online
-    fetch('http://localhost:8000/health')
-      .then((r) => r.ok && setServerStatus('connected'))
+    api.fetch('/health')
+      .then(() => setServerStatus('connected'))
       .catch(() => setServerStatus('simulated'));
 
-    // Global shortcut for opening psv CLI terminal (backtick)
+    // Global shortcut for opening diagnostic console (backtick)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === '`' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
         e.preventDefault();
@@ -60,11 +60,15 @@ export const App: React.FC = () => {
   }, []);
 
   const handleTriggerAudit = async (hostId: string) => {
+    if (!hostId) {
+      setCurrentTab('hosts');
+      return;
+    }
     setCurrentTab('assessments');
     await api.fetch('/assessments', {
       method: 'POST',
       body: JSON.stringify({ host_id: hostId, profile_id: 'cis-linux-server' }),
-    });
+    }).catch(() => {});
     loadData();
   };
 
@@ -72,7 +76,7 @@ export const App: React.FC = () => {
     await api.fetch('/remediation/plan', {
       method: 'POST',
       body: JSON.stringify({ finding_id: findingId }),
-    });
+    }).catch(() => {});
     setCurrentTab('remediation');
   };
 
@@ -83,7 +87,7 @@ export const App: React.FC = () => {
       {/* Top Navigation */}
       <Navbar
         onOpenTerminal={() => setIsTerminalOpen(true)}
-        onQuickAudit={() => handleTriggerAudit(hosts[0]?.id || 'host-01')}
+        onQuickAudit={() => (hosts.length > 0 ? handleTriggerAudit(hosts[0].id) : setCurrentTab('hosts'))}
         serverStatus={serverStatus}
       />
 
@@ -140,18 +144,21 @@ export const App: React.FC = () => {
           {currentTab === 'drift' && <Drift hosts={hosts} />}
 
           {currentTab === 'remediation' && (
-            <RemediationPage findings={findings} onRefresh={loadData} />
+            <RemediationPage
+              findings={findings}
+              onRefresh={loadData}
+            />
           )}
 
           {currentTab === 'reports' && <Reports assessments={assessments} />}
 
           {currentTab === 'audit-log' && <AuditLog />}
 
-          {currentTab === 'settings' && <SettingsPage />}
+          {currentTab === 'settings' && <SettingsPage onRefreshAll={loadData} />}
         </main>
       </div>
 
-      {/* Interactive PSV CLI Terminal Modal */}
+      {/* Restricted Diagnostic Console Modal */}
       <TerminalModal
         isOpen={isTerminalOpen}
         onClose={() => setIsTerminalOpen(false)}
