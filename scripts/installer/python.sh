@@ -4,8 +4,8 @@
 
 set -Eeuo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
+MODULE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${MODULE_DIR}/common.sh"
 
 setup_application_user_and_dirs() {
     local service_user="${PSV_SERVICE_USER:-psv}"
@@ -55,8 +55,8 @@ setup_python_environment() {
         python3 -m venv "${venv_dir}"
     fi
 
-    # Activate and upgrade core tooling
-    "${venv_dir}/bin/python" -m pip install --upgrade pip setuptools wheel --quiet || true
+    # Activate and upgrade core tooling including greenlet
+    "${venv_dir}/bin/python" -m pip install --upgrade pip setuptools wheel greenlet --quiet || true
 
     log_info "Installing PSV backend and CLI packages in editable mode..."
     cd "${install_dir}"
