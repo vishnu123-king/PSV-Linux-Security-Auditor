@@ -39,9 +39,17 @@ setup_application_user_and_dirs() {
     chmod 0755 /var/log/psv
     chmod 0755 /var/lib/psv/reports
 
-    # Chown repository install directory
-    chown -R "${service_user}:${service_user}" "${install_dir}"
-    chmod -R g+rX,o+rX "${install_dir}" 2>/dev/null || true
+    # Chown repository install directory to SUDO_USER if run via sudo, else service_user
+    local real_user="${SUDO_USER:-}"
+    if [ -n "${real_user}" ] && id "${real_user}" >/dev/null 2>&1; then
+        local user_group
+        user_group="$(id -gn "${real_user}" 2>/dev/null || echo "${real_user}")"
+        chown -R "${real_user}:${user_group}" "${install_dir}" 2>/dev/null || true
+    else
+        chown -R "${service_user}:${service_user}" "${install_dir}" 2>/dev/null || true
+    fi
+
+    chmod -R g+rwX,o+rwX "${install_dir}" 2>/dev/null || true
 
     # Ensure parent directories leading up to install_dir are traversable (+x) by service_user
     local current=""

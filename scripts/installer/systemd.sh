@@ -29,9 +29,21 @@ install_systemd_services() {
     backup_file "${worker_target}"
 
     # Ensure repository directory ownership & permissions
-    log_info "Enforcing permissions for service user '${service_user}'..."
-    chown -R "${service_user}:${service_user}" "${install_dir}" 2>/dev/null || true
-    chmod -R g+rX,o+rX "${install_dir}" 2>/dev/null || true
+    log_info "Enforcing permissions for service user '${service_user}' and user '${SUDO_USER:-$USER}'..."
+    local real_user="${SUDO_USER:-}"
+    if [ -n "${real_user}" ] && id "${real_user}" >/dev/null 2>&1; then
+        local user_group
+        user_group="$(id -gn "${real_user}" 2>/dev/null || echo "${real_user}")"
+        chown -R "${real_user}:${user_group}" "${install_dir}" 2>/dev/null || true
+    else
+        chown -R "${service_user}:${service_user}" "${install_dir}" 2>/dev/null || true
+    fi
+
+    chmod -R g+rwX,o+rwX "${install_dir}" 2>/dev/null || true
+
+    if [ -d "${install_dir}/node_modules" ]; then
+        chmod -R 777 "${install_dir}/node_modules" 2>/dev/null || true
+    fi
 
     # Secure environment file permissions for service user
     if [ -f "${install_dir}/.env" ]; then
