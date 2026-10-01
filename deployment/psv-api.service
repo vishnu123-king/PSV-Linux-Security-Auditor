@@ -5,30 +5,26 @@ Documentation=https://github.com/psv-auditor/psv-linux-security-auditor
 
 [Service]
 Type=simple
-User=psv
-Group=psv
-WorkingDirectory=/opt/psv-linux-security-auditor
-EnvironmentFile=/opt/psv-linux-security-auditor/.env
-ExecStart=/opt/psv-linux-security-auditor/.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --workers 4
+User={{SERVICE_USER}}
+Group={{SERVICE_USER}}
+WorkingDirectory={{INSTALL_DIR}}
+EnvironmentFile={{INSTALL_DIR}}/.env
+ExecStart={{INSTALL_DIR}}/.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --workers 4
 Restart=on-failure
 RestartSec=5s
 LimitNOFILE=65535
 
-# Systemd Production Sandboxing & Hardening Directives (Requirement #56)
-ProtectSystem=strict
-ProtectHome=true
+# Systemd Sandboxing & Hardening Directives
+ProtectSystem=full
+ProtectHome={{PROTECT_HOME}}
 NoNewPrivileges=true
 PrivateTmp=true
 RestrictSUIDSGID=true
 LockPersonality=true
-RestrictNamespaces=true
-SystemCallArchitectures=native
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-MemoryDenyWriteExecute=true
-ReadWritePaths=/opt/psv-linux-security-auditor/reports /opt/psv-linux-security-auditor/logs
-CapabilityBoundingSet=
+ReadWritePaths={{INSTALL_DIR}} /var/log/psv /var/lib/psv /etc/psv /tmp
 
 [Install]
 WantedBy=multi-user.target

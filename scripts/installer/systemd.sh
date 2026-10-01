@@ -28,9 +28,22 @@ install_systemd_services() {
     backup_file "${api_target}"
     backup_file "${worker_target}"
 
-    # Install updated units
-    cp "${api_src}" "${api_target}"
-    cp "${worker_src}" "${worker_target}"
+    # Determine ProtectHome directive based on installation directory location
+    local protect_home="true"
+    if [[ "${install_dir}" =~ ^/home/ ]] || [[ "${install_dir}" =~ ^/root/ ]]; then
+        protect_home="read-only"
+    fi
+
+    log_info "Substituting installation paths (${install_dir}) into unit templates..."
+    sed -e "s|{{INSTALL_DIR}}|${install_dir}|g" \
+        -e "s|{{SERVICE_USER}}|${service_user}|g" \
+        -e "s|{{PROTECT_HOME}}|${protect_home}|g" \
+        "${api_src}" > "${api_target}"
+
+    sed -e "s|{{INSTALL_DIR}}|${install_dir}|g" \
+        -e "s|{{SERVICE_USER}}|${service_user}|g" \
+        -e "s|{{PROTECT_HOME}}|${protect_home}|g" \
+        "${worker_src}" > "${worker_target}"
 
     chmod 0644 "${api_target}" "${worker_target}"
 
