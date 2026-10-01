@@ -39,6 +39,18 @@ def version():
     console.print(f"[bold cyan]PSV Linux Security Auditor CLI[/bold cyan] version [bold green]{__version__}[/bold green]")
 
 
+@cli_app.command("start")
+def start(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host network interface to bind"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to listen on"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for development")
+):
+    """Start the FastAPI backend control plane server directly."""
+    import uvicorn
+    console.print(f"[bold green]Starting PSV Control Plane on http://{host}:{port}...[/bold green]")
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload)
+
+
 @cli_app.command("doctor")
 def doctor(format: str = typer.Option("table", "--format", "-f", help="Output format: table, json")):
     """Run diagnostics on API connectivity, database status, and rules."""

@@ -69,20 +69,29 @@ install_systemd_services() {
         fi
     done
 
-    # Determine ProtectHome directive based on installation directory location
+    # Determine ProtectHome directive and effective service execution user
     local protect_home="true"
+    local effective_user="${service_user}"
+    local effective_group="${service_user}"
+
     if [[ "${install_dir}" =~ ^/home/ ]] || [[ "${install_dir}" =~ ^/root/ ]]; then
-        protect_home="read-only"
+        protect_home="false"
+        if [ -n "${real_user}" ] && id "${real_user}" >/dev/null 2>&1; then
+            effective_user="${real_user}"
+            effective_group="$(id -gn "${real_user}" 2>/dev/null || echo "${real_user}")"
+        fi
     fi
 
-    log_info "Substituting installation paths (${install_dir}) into unit templates..."
+    log_info "Configuring systemd units for execution user '${effective_user}:${effective_group}' (ProtectHome=${protect_home})..."
     sed -e "s|{{INSTALL_DIR}}|${install_dir}|g" \
-        -e "s|{{SERVICE_USER}}|${service_user}|g" \
+        -e "s|{{SERVICE_USER}}|${effective_user}|g" \
+        -e "s|{{SERVICE_GROUP}}|${effective_group}|g" \
         -e "s|{{PROTECT_HOME}}|${protect_home}|g" \
         "${api_src}" > "${api_target}"
 
     sed -e "s|{{INSTALL_DIR}}|${install_dir}|g" \
-        -e "s|{{SERVICE_USER}}|${service_user}|g" \
+        -e "s|{{SERVICE_USER}}|${effective_user}|g" \
+        -e "s|{{SERVICE_GROUP}}|${effective_group}|g" \
         -e "s|{{PROTECT_HOME}}|${protect_home}|g" \
         "${worker_src}" > "${worker_target}"
 

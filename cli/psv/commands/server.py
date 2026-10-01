@@ -7,6 +7,18 @@ from psv.output import console, create_table, print_error, print_json, print_pan
 app = typer.Typer(help="Inspect PSV Auditor server status and diagnostics")
 
 
+@app.command("start")
+def start_server(
+    host: str = typer.Option("0.0.0.0", "--host", "-h", help="Host network interface to bind"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to listen on"),
+    reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for development")
+):
+    """Start the FastAPI backend control plane server directly."""
+    import uvicorn
+    console.print(f"[bold green]Starting PSV Control Plane on http://{host}:{port}...[/bold green]")
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload)
+
+
 @app.command("status")
 def server_status(format: str = typer.Option("table", "--format", "-f", help="Output format: table, json")):
     """Check connectivity and operational health of the FastAPI control plane."""
