@@ -20,7 +20,7 @@ from backend.app.core.config import get_settings
 from backend.app.core.database import async_session_factory, init_db
 from backend.app.core.event_bus import event_bus
 from backend.app.core.logging import setup_logging
-from backend.app.core.security import decode_token, get_password_hash
+from backend.app.core.security import clear_login_lockouts, decode_token, get_password_hash
 from backend.app.models.entities import Assessment, Host, Organization, Profile, User, UserRole
 from backend.app.workers.assessment_worker import broadcast_manager, start_worker_listener
 
@@ -28,7 +28,8 @@ settings = get_settings()
 
 
 async def seed_initial_data() -> None:
-    """Seeds baseline organization and initial administrator user if not existing."""
+    """Seeds baseline organization and initial administrator user if not existing, or resets admin password hash."""
+    clear_login_lockouts()
     async with async_session_factory() as db:
         # Check if organization exists
         org_res = await db.execute(select(Organization).limit(1))
@@ -39,19 +40,21 @@ async def seed_initial_data() -> None:
             await db.flush()
 
         # Check if admin user exists
-        admin_res = await db.execute(select(User).where(User.email == settings.INITIAL_ADMIN_EMAIL))
+        admin_res = await db.execute(select(User).where(User.email == settings.INITIAL_ADMIN_EMAIL.lower()))
         admin = admin_res.scalar_one_or_none()
         if not admin:
             admin = User(
                 organization_id=org.id,
-                email=settings.INITIAL_ADMIN_EMAIL,
+                email=settings.INITIAL_ADMIN_EMAIL.lower(),
                 full_name="Lead Security Architect",
                 hashed_password=get_password_hash(settings.INITIAL_ADMIN_PASSWORD),
                 role=UserRole.ADMIN,
                 is_active=True
             )
             db.add(admin)
-            await db.flush()
+        else:
+            admin.hashed_password = get_password_hash(settings.INITIAL_ADMIN_PASSWORD)
+            admin.is_active = True
 
         # Database starts clean with 0 hosts, 0 assessments, 0 findings
         await db.commit()

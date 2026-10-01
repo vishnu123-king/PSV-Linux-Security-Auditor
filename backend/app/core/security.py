@@ -119,6 +119,11 @@ def reset_failed_login(identifier: str) -> None:
         del LOCKOUT_UNTIL[identifier]
 
 
+def clear_login_lockouts() -> None:
+    LOGIN_ATTEMPTS.clear()
+    LOCKOUT_UNTIL.clear()
+
+
 def create_access_token(
     subject: Union[str, Any],
     role: str,
