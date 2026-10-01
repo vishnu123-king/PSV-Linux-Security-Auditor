@@ -1,65 +1,65 @@
 # System Services Hardening Benchmark Rules (CIS Benchmark 2.1 / 2.2)
 
 - id: SVC-001
-  name: Ensure Insecure Legacy Daemons Are Not Running
+  name: "Ensure Insecure Legacy Daemons Are Not Running"
   version: 1.0.0
   category: services
   severity: HIGH
   control: services.insecure_services_running
-  rationale: Insecure legacy service daemons (such as telnet, rsh, tftp, vsftpd) introduce severe vulnerabilities including plaintext transport and weak authentication.
+  rationale: "Insecure legacy service daemons (such as telnet, rsh, tftp, vsftpd) introduce severe vulnerabilities including plaintext transport and weak authentication."
   condition:
     operator: equals
     actual:
       observation: services.insecure_services_running
     expected: false
-  remediation_guidance: Stop and mask detected insecure services: 'systemctl stop <service>' and 'systemctl mask <service>'.
-  verification_method: Run 'systemctl list-units --type=service --state=running' and confirm absence of legacy daemons.
+  remediation_guidance: "Stop and mask detected insecure services: 'systemctl stop <service>' and 'systemctl mask <service>'."
+  verification_method: "Run 'systemctl list-units --type=service --state=running' and confirm absence of legacy daemons."
   supported_distros: ["all"]
 
 - id: SVC-002
-  name: Ensure Time Synchronization Is Active (Chrony or Timesyncd)
+  name: "Ensure Time Synchronization Is Active (Chrony or Timesyncd)"
   version: 1.0.0
   category: services
   severity: MEDIUM
   control: services.time_synchronization_active
-  rationale: Accurate system clocks are mandatory for digital forensic timelines, TLS certificate validation, Kerberos tickets, and centralized log correlation.
+  rationale: "Accurate system clocks are mandatory for digital forensic timelines, TLS certificate validation, Kerberos tickets, and centralized log correlation."
   condition:
     operator: equals
     actual:
       observation: services.time_synchronization_active
     expected: true
-  remediation_guidance: Install and enable chrony or systemd-timesyncd: 'timedatectl set-ntp true' or 'systemctl enable --now chrony'.
-  verification_method: Run 'timedatectl status' and verify 'NTP service: active'.
+  remediation_guidance: "Install and enable chrony or systemd-timesyncd: 'timedatectl set-ntp true' or 'systemctl enable --now chrony'."
+  verification_method: "Run 'timedatectl status' and verify 'NTP service: active'."
   supported_distros: ["all"]
 
 - id: SVC-003
-  name: Audit Total Number of Running Services
+  name: "Audit Total Number of Running Services"
   version: 1.0.0
   category: services
   severity: LOW
   control: services.total_running_services
-  rationale: Minimizing running services reduces the attack surface and preserves system resources.
+  rationale: "Minimizing running services reduces the attack surface and preserves system resources."
   condition:
     operator: less_than
     actual:
       observation: services.total_running_services
     expected: 75
-  remediation_guidance: Review running units with 'systemctl list-units --type=service' and disable unneeded services.
-  verification_method: Check running service count with 'systemctl list-units --type=service --state=running | wc -l'.
+  remediation_guidance: "Review running units with 'systemctl list-units --type=service' and disable unneeded services."
+  verification_method: "Check running service count with 'systemctl list-units --type=service --state=running | wc -l'."
   supported_distros: ["all"]
 
 - id: SVC-004
-  name: Verify No Insecure Daemons in Services List
+  name: "Verify No Insecure Daemons in Services List"
   version: 1.0.0
   category: services
   severity: HIGH
   control: services.insecure_services_list
-  rationale: The list of flagged insecure daemons must be completely empty.
+  rationale: "The list of flagged insecure daemons must be completely empty."
   condition:
     operator: equals
     actual:
       observation: services.insecure_services_list
     expected: []
-  remediation_guidance: Uninstall obsolete packages using apt purge or dnf remove.
-  verification_method: Verify empty array returned from services collector.
+  remediation_guidance: "Uninstall obsolete packages using apt purge or dnf remove."
+  verification_method: "Verify empty array returned from services collector."
   supported_distros: ["all"]

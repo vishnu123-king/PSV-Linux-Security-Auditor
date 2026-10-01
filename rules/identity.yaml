@@ -1,97 +1,97 @@
 # Identity and User Account Security Benchmark Rules (CIS Benchmark 5.4 / 6.2)
 
 - id: ID-001
-  name: Ensure Only Root Has UID 0
+  name: "Ensure Only Root Has UID 0"
   version: 1.0.0
   category: identity
   severity: CRITICAL
   control: identity.single_uid_zero
-  rationale: Any account with UID 0 holds superuser capabilities. Having secondary or backdoored UID 0 accounts breaks auditing and circumvents access control.
+  rationale: "Any account with UID 0 holds superuser capabilities. Having secondary or backdoored UID 0 accounts breaks auditing and circumvents access control."
   condition:
     operator: equals
     actual:
       observation: identity.single_uid_zero
     expected: true
-  remediation_guidance: Audit /etc/passwd for any secondary users with UID 0. Remove or reassign UID using 'usermod -u <new-uid> <username>'.
-  verification_method: Run 'awk -F: '($3 == 0) { print $1 }' /etc/passwd' and verify only 'root' is output.
+  remediation_guidance: "Audit /etc/passwd for any secondary users with UID 0. Remove or reassign UID using 'usermod -u <new-uid> <username>'."
+  verification_method: "Run 'awk -F: '\''($3 == 0) { print $1 }'\'' /etc/passwd' and verify only 'root' is output."
   supported_distros: ["all"]
 
 - id: ID-002
-  name: Prohibit Empty Password Fields in Shadow File
+  name: "Prohibit Empty Password Fields in Shadow File"
   version: 1.0.0
   category: identity
   severity: CRITICAL
   control: identity.empty_password_accounts
-  rationale: An empty password field in /etc/shadow permits login without a password over console or PAM services.
+  rationale: "An empty password field in /etc/shadow permits login without a password over console or PAM services."
   condition:
     operator: equals
     actual:
       observation: identity.empty_password_accounts
     expected: []
-  remediation_guidance: Lock any accounts with empty passwords using 'passwd -l <user>' or set a strong password.
-  verification_method: Run 'awk -F: '($2 == "") { print $1 }' /etc/shadow' and verify no accounts are returned.
+  remediation_guidance: "Lock any accounts with empty passwords using 'passwd -l <user>' or set a strong password."
+  verification_method: "Run 'awk -F: '\''($2 == \"\") { print $1 }'\'' /etc/shadow' and verify no accounts are returned."
   supported_distros: ["all"]
 
 - id: ID-003
-  name: Enforce Strong Password Hashing Algorithm (SHA-512 or Yescrypt)
+  name: "Enforce Strong Password Hashing Algorithm (SHA-512 or Yescrypt)"
   version: 1.0.0
   category: identity
   severity: HIGH
   control: identity.weak_hash_accounts
-  rationale: Legacy DES, MD5, and blowfish hashes are susceptible to offline GPU dictionary and rainbow table cracking. Modern Linux distributions must use SHA-512 ($6$) or Yescrypt ($y$).
+  rationale: "Legacy DES, MD5, and blowfish hashes are susceptible to offline GPU dictionary and rainbow table cracking. Modern Linux distributions must use SHA-512 (\$6\$) or Yescrypt (\$y\$)."
   condition:
     operator: equals
     actual:
       observation: identity.weak_hash_accounts
     expected: []
-  remediation_guidance: Set 'ENCRYPT_METHOD SHA512' or 'ENCRYPT_METHOD YESCRYPT' in /etc/login.defs and force password reset for flagged users.
-  verification_method: Audit /etc/shadow password prefixes for $6$ or $y$.
+  remediation_guidance: "Set 'ENCRYPT_METHOD SHA512' or 'ENCRYPT_METHOD YESCRYPT' in /etc/login.defs and force password reset for flagged users."
+  verification_method: "Audit /etc/shadow password prefixes for \$6\$ or \$y\$."
   supported_distros: ["all"]
 
 - id: ID-004
-  name: Restrict System Accounts from Having Interactive Shells
+  name: "Restrict System Accounts from Having Interactive Shells"
   version: 1.0.0
   category: identity
   severity: MEDIUM
   control: identity.system_users_with_interactive_shell
-  rationale: System service accounts (UID < 1000) do not need interactive shell logins; providing shells increases risk of lateral movement if a service is exploited.
+  rationale: "System service accounts (UID < 1000) do not need interactive shell logins; providing shells increases risk of lateral movement if a service is exploited."
   condition:
     operator: equals
     actual:
       observation: identity.system_users_with_interactive_shell
     expected: []
-  remediation_guidance: Change shell of system users to /usr/sbin/nologin or /bin/false using 'usermod -s /usr/sbin/nologin <user>'.
-  verification_method: Verify /etc/passwd shows /usr/sbin/nologin for daemon accounts.
+  remediation_guidance: "Change shell of system users to /usr/sbin/nologin or /bin/false using 'usermod -s /usr/sbin/nologin <user>'."
+  verification_method: "Verify /etc/passwd shows /usr/sbin/nologin for daemon accounts."
   supported_distros: ["all"]
 
 - id: ID-005
-  name: Enforce Maximum Password Age Policy
+  name: "Enforce Maximum Password Age Policy"
   version: 1.0.0
   category: identity
   severity: LOW
   control: identity.pass_max_days
-  rationale: Restricting password validity period ensures dormant or forgotten credentials expire and limits the window of exposure for compromised secrets.
+  rationale: "Restricting password validity period ensures dormant or forgotten credentials expire and limits the window of exposure for compromised secrets."
   condition:
     operator: less_than_or_equal
     actual:
       observation: identity.pass_max_days
     expected: 90
-  remediation_guidance: Set 'PASS_MAX_DAYS 90' in /etc/login.defs.
-  verification_method: Check 'grep PASS_MAX_DAYS /etc/login.defs'.
+  remediation_guidance: "Set 'PASS_MAX_DAYS 90' in /etc/login.defs."
+  verification_method: "Check 'grep PASS_MAX_DAYS /etc/login.defs'."
   supported_distros: ["all"]
 
 - id: ID-006
-  name: Enforce Minimum Password Age Policy
+  name: "Enforce Minimum Password Age Policy"
   version: 1.0.0
   category: identity
   severity: LOW
   control: identity.pass_min_days
-  rationale: Setting PASS_MIN_DAYS prevents users from cycling repeatedly through passwords immediately to revert to an old compromised password.
+  rationale: "Setting PASS_MIN_DAYS prevents users from cycling repeatedly through passwords immediately to revert to an old compromised password."
   condition:
     operator: greater_than_or_equal
     actual:
       observation: identity.pass_min_days
     expected: 1
-  remediation_guidance: Set 'PASS_MIN_DAYS 1' in /etc/login.defs.
-  verification_method: Check 'grep PASS_MIN_DAYS /etc/login.defs'.
+  remediation_guidance: "Set 'PASS_MIN_DAYS 1' in /etc/login.defs."
+  verification_method: "Check 'grep PASS_MIN_DAYS /etc/login.defs'."
   supported_distros: ["all"]
