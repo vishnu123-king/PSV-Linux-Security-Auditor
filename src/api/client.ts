@@ -37,7 +37,7 @@ class APIClient {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, username: email, password }),
     });
 
     if (!res.ok) {

@@ -40,7 +40,15 @@ async def login(
 ):
     settings = get_settings()
     client_ip = request.client.host if request.client else "unknown"
-    rate_limit_key = f"{client_ip}:{credentials.email.lower()}"
+    login_id = (credentials.email or credentials.username or "").strip().lower()
+
+    if not login_id or not credentials.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email/username and password are required."
+        )
+
+    rate_limit_key = f"{client_ip}:{login_id}"
 
     # 1. Check brute force lockout
     allowed, retry_after = check_login_rate_limit(rate_limit_key)
@@ -52,14 +60,18 @@ async def login(
         )
 
     # 2. Look up user
-    result = await db.execute(select(User).where(User.email == credentials.email.lower()))
+    result = await db.execute(select(User).where(User.email == login_id))
     user = result.scalar_one_or_none()
+
+    if not user and login_id in ("admin", "admin@psv.local", settings.INITIAL_ADMIN_EMAIL.lower()):
+        result = await db.execute(select(User).where(User.email == settings.INITIAL_ADMIN_EMAIL.lower()))
+        user = result.scalar_one_or_none()
 
     if not user or not verify_password(credentials.password, user.hashed_password):
         record_failed_login(rate_limit_key)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Incorrect email/username or password",
             headers={"WWW-Authenticate": "Bearer"}
         )
 

@@ -24,7 +24,8 @@ class BaseSchema(BaseModel):
 
 # Auth & User schemas
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: Optional[str] = None
+    username: Optional[str] = None
     password: str
 
 
