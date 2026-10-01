@@ -1,7 +1,7 @@
 from typing import Optional
 import typer
-from cli.psv.client import psv_client
-from cli.psv.output import console, create_table, get_severity_styled, print_error, print_json, print_panel
+from psv.client import psv_client
+from psv.output import console, create_table, get_severity_styled, print_error, print_json, print_panel
 
 app = typer.Typer(help="Browse and inspect YAML security rules")
 

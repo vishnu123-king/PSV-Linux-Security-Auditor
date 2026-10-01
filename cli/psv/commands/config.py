@@ -6,8 +6,8 @@ Hardening Requirements #52, #53:
 """
 
 import typer
-from cli.psv.config import CONFIG_FILE, cli_config
-from cli.psv.output import console, print_panel, print_success
+from psv.config import CONFIG_FILE, cli_config
+from psv.output import console, print_panel, print_success
 
 app = typer.Typer(help="Manage CLI configuration and credentials")
 

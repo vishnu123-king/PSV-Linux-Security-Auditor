@@ -1,7 +1,7 @@
 from typing import Optional
 import typer
-from cli.psv.client import psv_client
-from cli.psv.output import (
+from psv.client import psv_client
+from psv.output import (
     console,
     create_table,
     get_status_styled,

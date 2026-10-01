@@ -1,6 +1,6 @@
 import typer
-from cli.psv.client import psv_client
-from cli.psv.output import console, create_table, print_error, print_json, print_panel, print_success, print_warning
+from psv.client import psv_client
+from psv.output import console, create_table, print_error, print_json, print_panel, print_success, print_warning
 
 app = typer.Typer(help="Inspect PSV Auditor server status and diagnostics")
 

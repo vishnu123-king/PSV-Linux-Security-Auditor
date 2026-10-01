@@ -1,17 +1,17 @@
 import typer
-from cli.psv import __version__
-from cli.psv.commands.audits import app as audits_app
-from cli.psv.commands.config import app as config_app
-from cli.psv.commands.drift import app as drift_app
-from cli.psv.commands.findings import app as findings_app
-from cli.psv.commands.hosts import app as hosts_app
-from cli.psv.commands.profiles import app as profiles_app
-from cli.psv.commands.remediation import app as remediation_app
-from cli.psv.commands.reports import app as reports_app
-from cli.psv.commands.rules import app as rules_app
-from cli.psv.commands.server import app as server_app, doctor_command
-from cli.psv.commands.verification import app as verification_app
-from cli.psv.output import console, print_panel
+from psv import __version__
+from psv.commands.audits import app as audits_app
+from psv.commands.config import app as config_app
+from psv.commands.drift import app as drift_app
+from psv.commands.findings import app as findings_app
+from psv.commands.hosts import app as hosts_app
+from psv.commands.profiles import app as profiles_app
+from psv.commands.remediation import app as remediation_app
+from psv.commands.reports import app as reports_app
+from psv.commands.rules import app as rules_app
+from psv.commands.server import app as server_app, doctor_command
+from psv.commands.verification import app as verification_app
+from psv.output import console, print_panel
 
 cli_app = typer.Typer(
     name="psv",

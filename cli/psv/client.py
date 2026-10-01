@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 import httpx
-from cli.psv.config import cli_config
-from cli.psv.errors import APIConnectionError, AuthenticationError, CommandExecutionError
+from psv.config import cli_config
+from psv.errors import APIConnectionError, AuthenticationError, CommandExecutionError
 
 
 class PSVClient:

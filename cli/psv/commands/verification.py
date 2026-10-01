@@ -1,6 +1,6 @@
 import typer
-from cli.psv.client import psv_client
-from cli.psv.output import console, create_table, print_error, print_json, print_panel, print_success
+from psv.client import psv_client
+from psv.output import console, create_table, print_error, print_json, print_panel, print_success
 
 app = typer.Typer(help="Trigger verification re-check of a finding")
 
