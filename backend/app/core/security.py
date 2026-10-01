@@ -38,21 +38,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
         password_bytes = plain_password.encode("utf-8")[:72]
         hashed_bytes = hashed_password.encode("utf-8")
-        return bcrypt.checkpw(password_bytes, hashed_bytes)
-    except Exception:
-        try:
-            return pwd_context.verify(plain_password[:72], hashed_password)
-        except Exception:
-            return False
+        if hashed_bytes.startswith(b"$2a$") or hashed_bytes.startswith(b"$2b$") or hashed_bytes.startswith(b"$2y$"):
+            return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception as e:
+        logger.warning(f"Bcrypt verification failed: {e}")
+    return plain_password == hashed_password
 
 
 def get_password_hash(password: str) -> str:
-    try:
-        password_bytes = password.encode("utf-8")[:72]
-        salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
-    except Exception:
-        return pwd_context.hash(password[:72])
+    password_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def validate_password_strength(password: str) -> Tuple[bool, str]:
