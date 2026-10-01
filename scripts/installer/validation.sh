@@ -43,8 +43,9 @@ run_migrations_and_validations() {
 }
 
 verify_service_health() {
-    local max_retries=15
-    local retry_delay=2
+    local install_dir="${1:-.}"
+    local max_retries=20
+    local retry_delay=1
     local api_url="http://127.0.0.1:8000/health"
     local ready_url="http://127.0.0.1:8000/ready"
 
@@ -69,7 +70,7 @@ verify_service_health() {
     fi
 
     log_info "Verifying CLI functionality..."
-    local psv_bin="${1}/.venv/bin/psv"
+    local psv_bin="${install_dir}/.venv/bin/psv"
     if [ -f "${psv_bin}" ]; then
         "${psv_bin}" version || true
     fi

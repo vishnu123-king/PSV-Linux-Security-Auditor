@@ -45,10 +45,16 @@ install_systemd_services() {
         chmod -R 777 "${install_dir}/node_modules" 2>/dev/null || true
     fi
 
-    # Secure environment file permissions for service user
+    # Secure environment file permissions for service user and repository owner
     if [ -f "${install_dir}/.env" ]; then
-        chown "${service_user}:${service_user}" "${install_dir}/.env" 2>/dev/null || true
-        chmod 0640 "${install_dir}/.env" 2>/dev/null || true
+        if [ -n "${real_user}" ] && id "${real_user}" >/dev/null 2>&1; then
+            local user_group
+            user_group="$(id -gn "${real_user}" 2>/dev/null || echo "${real_user}")"
+            chown "${real_user}:${user_group}" "${install_dir}/.env" 2>/dev/null || true
+        else
+            chown "${service_user}:${service_user}" "${install_dir}/.env" 2>/dev/null || true
+        fi
+        chmod 0644 "${install_dir}/.env" 2>/dev/null || true
     fi
 
     # Ensure parent directories leading up to install_dir are traversable (+x) by service_user

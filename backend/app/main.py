@@ -228,6 +228,16 @@ async def health_root():
     }
 
 
+@app.get("/ready")
+async def ready_endpoint():
+    return {
+        "status": "ready",
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
+        "environment": settings.APP_ENV
+    }
+
+
 @app.get("/version")
 async def version_endpoint():
     return {

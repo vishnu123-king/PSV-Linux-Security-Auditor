@@ -272,9 +272,16 @@ with open(env_file, 'w', encoding='utf-8') as f:
     f.writelines(new_lines)
 " 2>/dev/null || true
 
-    chown "${service_user}:${service_user}" "${env_file}" 2>/dev/null || true
-    chmod 0640 "${env_file}"
-    log_info "Environment configuration '.env' secured for service user '${service_user}'."
+    local real_user="${SUDO_USER:-}"
+    if [ -n "${real_user}" ] && id "${real_user}" >/dev/null 2>&1; then
+        local user_group
+        user_group="$(id -gn "${real_user}" 2>/dev/null || echo "${real_user}")"
+        chown "${real_user}:${user_group}" "${env_file}" 2>/dev/null || true
+    else
+        chown "${service_user}:${service_user}" "${env_file}" 2>/dev/null || true
+    fi
+    chmod 0644 "${env_file}" 2>/dev/null || true
+    log_info "Environment configuration '.env' secured (mode: 0644)."
 
     log_stage "6/8 DATABASE MIGRATIONS & BENCHMARK RULE VALIDATION"
     run_migrations_and_validations "${INSTALL_DIR}" "${MODE}" "${SKIP_MIGRATIONS}"
