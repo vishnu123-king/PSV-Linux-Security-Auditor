@@ -177,6 +177,7 @@ def test_host(
 
 
 @app.command("remove")
+@app.command("delete")
 def remove_host(
     host_id: str = typer.Argument(..., help="Host ID to delete"),
     confirm: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt")

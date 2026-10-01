@@ -157,6 +157,7 @@ def run_audit(
 
 
 @app.command("status")
+@app.command("show")
 def audit_status(
     assessment_id: str = typer.Argument(..., help="Assessment ID or prefix"),
     format: str = typer.Option("table", "--format", "-f")
