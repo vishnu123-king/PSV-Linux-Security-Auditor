@@ -47,11 +47,33 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
+from sqlalchemy import text
+
+
 async def init_db() -> None:
-    """Initialize database tables and seed baseline profiles and admin."""
+    """Initialize database tables and auto-migrate missing columns for SQLite."""
     # Import all models so Base has metadata registered
     import backend.app.models  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        # If using SQLite, auto-migrate missing columns for existing tables
+        if "sqlite" in settings.DATABASE_URL:
+            for table_name, table in Base.metadata.tables.items():
+                res = await conn.execute(text(f"PRAGMA table_info({table_name})"))
+                existing_cols = {row[1] for row in res.fetchall()}
+                if not existing_cols:
+                    continue
+
+                for col in table.columns:
+                    if col.name not in existing_cols:
+                        col_type = col.type.compile(engine.dialect)
+                        sql = f"ALTER TABLE {table_name} ADD COLUMN {col.name} {col_type}"
+                        try:
+                            await conn.execute(text(sql))
+                            logger.info(f"Auto-migrated: Added column '{col.name}' to '{table_name}'")
+                        except Exception as e:
+                            logger.warning(f"Could not add column '{col.name}' to '{table_name}': {e}")
+
     logger.info("Database schema verified and created.")
