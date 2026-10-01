@@ -4,8 +4,8 @@
 
 set -Eeuo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
+MODULE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${MODULE_DIR}/common.sh"
 
 setup_postgresql() {
     local db_name="${PSV_DB_NAME:-psv_auditor}"
@@ -30,6 +30,11 @@ setup_postgresql() {
             die "PostgreSQL is not accessible. Please ensure PostgreSQL is running and local socket access is granted."
         fi
     fi
+
+    # Proactively refresh collation versions if operating system glibc/locales were updated (e.g., Kali / Debian / Ubuntu)
+    log_info "Refreshing PostgreSQL collation versions to prevent glibc upgrade mismatches..."
+    su - postgres -c "psql -c 'ALTER DATABASE template1 REFRESH COLLATION VERSION;' 2>/dev/null || true"
+    su - postgres -c "psql -c 'ALTER DATABASE postgres REFRESH COLLATION VERSION;' 2>/dev/null || true"
 
     # Check if user already exists
     local user_exists
@@ -59,7 +64,11 @@ setup_postgresql() {
 
     if [ "${db_exists}" != "1" ]; then
         log_info "Creating PostgreSQL database '${db_name}'..."
-        su - postgres -c "psql -c \"CREATE DATABASE ${db_name} OWNER ${db_user};\""
+        if ! su - postgres -c "psql -c \"CREATE DATABASE ${db_name} OWNER ${db_user};\"" 2>/dev/null; then
+            log_warn "Retrying database creation after refreshing collation version..."
+            su - postgres -c "psql -c 'ALTER DATABASE template1 REFRESH COLLATION VERSION;' 2>/dev/null || true"
+            su - postgres -c "psql -c \"CREATE DATABASE ${db_name} OWNER ${db_user};\""
+        fi
         su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${db_name} TO ${db_user};\""
     else
         log_info "PostgreSQL database '${db_name}' already exists. Preserving database data."
