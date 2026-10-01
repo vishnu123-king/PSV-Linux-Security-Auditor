@@ -255,8 +255,14 @@ class FindingAcknowledge(BaseModel):
     acknowledged_by: Optional[str] = "admin"
 
 
+FindingAcknowledgeRequest = FindingAcknowledge
+
+
 class FindingSuppress(BaseModel):
     reason: str
+
+
+FindingSuppressRequest = FindingSuppress
 
 
 # Evidence schema
