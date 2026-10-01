@@ -101,17 +101,23 @@ def add_local_host(
 @app.command("add")
 def add_host(
     name: str = typer.Option(..., "--name", "-n", help="Display name for the target host"),
-    hostname: str = typer.Option(..., "--hostname", "-H", help="IP address or FQDN"),
+    hostname: Optional[str] = typer.Option(None, "--hostname", "-H", help="IP address or FQDN"),
+    address: Optional[str] = typer.Option(None, "--address", "-a", help="IP address or FQDN"),
     port: int = typer.Option(22, "--port", "-p", help="SSH port"),
     environment: str = typer.Option("production", "--env", "-e", help="Environment (production, staging, dev)"),
     username: str = typer.Option("root", "--user", "-u", help="SSH login username"),
     format: str = typer.Option("table", "--format", "-f")
 ):
     """Onboard and register a new authorized Linux target."""
+    target_addr = address or hostname
+    if not target_addr:
+        print_error("Either --hostname or --address must be specified.")
+        raise typer.Exit(code=1)
+
     try:
         payload = {
             "name": name,
-            "hostname": hostname,
+            "hostname": target_addr,
             "port": port,
             "environment": environment,
             "username": username,
