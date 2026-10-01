@@ -23,20 +23,81 @@ export interface LocalDiscoveryData {
 }
 
 class APIClient {
+  private isAuthenticating = false;
+
   private getBaseUrl(): string {
     return API_ROOT.endsWith('/') ? API_ROOT.slice(0, -1) : API_ROOT;
   }
 
+  async login(
+    email = 'admin@psv.local',
+    password = 'AdminSecurePassword123!'
+  ): Promise<string> {
+    const url = `${this.getBaseUrl()}/auth/login`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) {
+      throw new Error('Authentication failed');
+    }
+
+    const data = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('psv_token', data.access_token);
+      return data.access_token;
+    }
+    throw new Error('No access_token returned');
+  }
+
   async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = path.startsWith('http') ? path : `${this.getBaseUrl()}${path}`;
-    try {
-      const res = await fetch(url, {
+    let token = localStorage.getItem('psv_token');
+
+    // Auto-login on first call if token is missing
+    if (!token && !path.startsWith('/auth/login') && path !== '/health' && !this.isAuthenticating) {
+      try {
+        this.isAuthenticating = true;
+        token = await this.login();
+      } catch {
+        // Continue without token if login fails
+      } finally {
+        this.isAuthenticating = false;
+      }
+    }
+
+    const execRequest = async (authToken: string | null) => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(options.headers as Record<string, string> || {}),
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      return await fetch(url, {
         ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {}),
-        },
+        headers,
       });
+    };
+
+    try {
+      let res = await execRequest(token);
+
+      // If 401 Unauthorized, re-authenticate and retry
+      if (res.status === 401 && !path.startsWith('/auth/login') && !this.isAuthenticating) {
+        try {
+          this.isAuthenticating = true;
+          token = await this.login();
+          res = await execRequest(token);
+        } catch {
+          // Re-authentication failed
+        } finally {
+          this.isAuthenticating = false;
+        }
+      }
 
       if (res.ok) {
         if (res.status === 204) return {} as T;

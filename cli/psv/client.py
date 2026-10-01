@@ -18,6 +18,25 @@ class PSVClient:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
+    def auto_login(self) -> Optional[str]:
+        """Auto-authenticates with initial credentials if token is missing or expired."""
+        try:
+            url = f"{self.base_url}/api/v1/auth/login"
+            with httpx.Client(timeout=10.0) as client:
+                res = client.post(
+                    url,
+                    json={"email": "admin@psv.local", "password": "AdminSecurePassword123!"}
+                )
+                if res.status_code == 200:
+                    token = res.json().get("access_token")
+                    if token:
+                        self.token = token
+                        cli_config.save_token(token)
+                        return token
+        except Exception:
+            pass
+        return None
+
     def request(
         self,
         method: str,
@@ -27,6 +46,10 @@ class PSVClient:
         timeout: float = 30.0
     ) -> Any:
         url = f"{self.base_url}/api/v1{path}"
+
+        if not self.token and path != "/auth/login":
+            self.auto_login()
+
         try:
             with httpx.Client(timeout=timeout) as client:
                 response = client.request(
@@ -36,6 +59,17 @@ class PSVClient:
                     json=json_data,
                     headers=self._headers()
                 )
+
+                if response.status_code == 401 and path != "/auth/login":
+                    # Retry once with auto_login
+                    if self.auto_login():
+                        response = client.request(
+                            method=method,
+                            url=url,
+                            params=params,
+                            json=json_data,
+                            headers=self._headers()
+                        )
 
                 if response.status_code == 401:
                     raise AuthenticationError("Authentication failed: invalid or expired API token.")
