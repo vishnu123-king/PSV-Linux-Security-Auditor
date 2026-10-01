@@ -41,6 +41,19 @@ setup_application_user_and_dirs() {
 
     # Chown repository install directory
     chown -R "${service_user}:${service_user}" "${install_dir}"
+    chmod -R g+rX,o+rX "${install_dir}" 2>/dev/null || true
+
+    # Ensure parent directories leading up to install_dir are traversable (+x) by service_user
+    local current=""
+    IFS='/' read -ra parts <<< "${install_dir}"
+    for part in "${parts[@]}"; do
+        if [ -n "${part}" ]; then
+            current="${current}/${part}"
+            if [ -d "${current}" ]; then
+                chmod o+x "${current}" 2>/dev/null || true
+            fi
+        fi
+    done
 
     update_state "app_user_ready" "completed"
 }

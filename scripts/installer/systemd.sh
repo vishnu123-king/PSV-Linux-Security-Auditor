@@ -28,6 +28,29 @@ install_systemd_services() {
     backup_file "${api_target}"
     backup_file "${worker_target}"
 
+    # Ensure repository directory ownership & permissions
+    log_info "Enforcing permissions for service user '${service_user}'..."
+    chown -R "${service_user}:${service_user}" "${install_dir}" 2>/dev/null || true
+    chmod -R g+rX,o+rX "${install_dir}" 2>/dev/null || true
+
+    # Secure environment file permissions for service user
+    if [ -f "${install_dir}/.env" ]; then
+        chown "${service_user}:${service_user}" "${install_dir}/.env" 2>/dev/null || true
+        chmod 0640 "${install_dir}/.env" 2>/dev/null || true
+    fi
+
+    # Ensure parent directories leading up to install_dir are traversable (+x) by service_user
+    local current=""
+    IFS='/' read -ra parts <<< "${install_dir}"
+    for part in "${parts[@]}"; do
+        if [ -n "${part}" ]; then
+            current="${current}/${part}"
+            if [ -d "${current}" ]; then
+                chmod o+x "${current}" 2>/dev/null || true
+            fi
+        fi
+    done
+
     # Determine ProtectHome directive based on installation directory location
     local protect_home="true"
     if [[ "${install_dir}" =~ ^/home/ ]] || [[ "${install_dir}" =~ ^/root/ ]]; then

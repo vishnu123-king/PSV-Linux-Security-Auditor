@@ -212,12 +212,13 @@ main() {
     local secret_key
     local jwt_secret
     local admin_pass
+    local service_user="${PSV_SERVICE_USER:-psv}"
 
     secret_key="$(generate_secret 32)"
     jwt_secret="$(generate_secret 32)"
     admin_pass="$(generate_password)"
 
-    # Write or update .env parameters cleanly
+    # Write or update .env parameters cleanly without malformed quotes
     python3 -c "
 import os
 
@@ -256,21 +257,24 @@ for line in lines:
             matched_key = k
             break
     if matched_key:
-        new_lines.append(f'{matched_key}=\"{updates[matched_key]}\"\n')
+        val = updates[matched_key].strip('\"\'')
+        new_lines.append(f'{matched_key}=\"{val}\"\n')
         seen.add(matched_key)
     else:
         new_lines.append(line)
 
 for k, v in updates.items():
     if k not in seen:
-        new_lines.append(f'{k}=\"{v}\"\n')
+        val = v.strip('\"\'')
+        new_lines.append(f'{k}=\"{val}\"\n')
 
 with open(env_file, 'w', encoding='utf-8') as f:
     f.writelines(new_lines)
 " 2>/dev/null || true
 
-    chmod 0600 "${env_file}"
-    log_info "Environment configuration '.env' secured with 0600 permissions."
+    chown "${service_user}:${service_user}" "${env_file}" 2>/dev/null || true
+    chmod 0640 "${env_file}"
+    log_info "Environment configuration '.env' secured for service user '${service_user}'."
 
     log_stage "6/8 DATABASE MIGRATIONS & BENCHMARK RULE VALIDATION"
     run_migrations_and_validations "${INSTALL_DIR}" "${MODE}" "${SKIP_MIGRATIONS}"
