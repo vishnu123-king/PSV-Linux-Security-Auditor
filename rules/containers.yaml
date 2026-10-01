@@ -12,7 +12,7 @@
     actual:
       observation: containers.userns_remap_enabled
     expected: true
-  remediation_guidance: "Configure '\"userns-remap\": \"default\"' in /etc/docker/daemon.json and restart docker."
+  remediation_guidance: "Configure userns-remap in /etc/docker/daemon.json and restart docker."
   verification_method: "Check /etc/docker/daemon.json for userns-remap property."
   supported_distros: ["all"]
 
@@ -28,8 +28,8 @@
     actual:
       observation: containers.live_restore_enabled
     expected: true
-  remediation_guidance: "Add '\"live-restore\": true' to /etc/docker/daemon.json."
-  verification_method: "Check 'docker info --format \"{{.LiveRestoreEnabled}}\"'."
+  remediation_guidance: "Add live-restore: true to /etc/docker/daemon.json."
+  verification_method: "Check docker info --format '{{.LiveRestoreEnabled}}'."
   supported_distros: ["all"]
 
 - id: CONT-003
@@ -44,7 +44,7 @@
     actual:
       observation: containers.no_new_privileges_default
     expected: true
-  remediation_guidance: "Add '\"no-new-privileges\": true' in /etc/docker/daemon.json."
+  remediation_guidance: "Add no-new-privileges: true in /etc/docker/daemon.json."
   verification_method: "Inspect /etc/docker/daemon.json."
   supported_distros: ["all"]
 
@@ -60,7 +60,7 @@
     actual:
       observation: containers.inter_container_communication_disabled
     expected: true
-  remediation_guidance: "Add '\"icc\": false' to /etc/docker/daemon.json."
+  remediation_guidance: "Add icc: false to /etc/docker/daemon.json."
   verification_method: "Inspect /etc/docker/daemon.json for icc setting."
   supported_distros: ["all"]
 
@@ -76,6 +76,6 @@
     actual:
       observation: containers.running_container_count
     expected: 0
-  remediation_guidance: "Stop unauthorized containers with 'docker stop <container_id>'."
-  verification_method: "Check 'docker ps -q | wc -l'."
+  remediation_guidance: "Stop unauthorized containers with docker stop <container_id>."
+  verification_method: "Check docker ps -q | wc -l."
   supported_distros: ["all"]

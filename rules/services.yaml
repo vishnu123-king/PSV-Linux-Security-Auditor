@@ -12,8 +12,8 @@
     actual:
       observation: services.insecure_services_running
     expected: false
-  remediation_guidance: "Stop and mask detected insecure services: 'systemctl stop <service>' and 'systemctl mask <service>'."
-  verification_method: "Run 'systemctl list-units --type=service --state=running' and confirm absence of legacy daemons."
+  remediation_guidance: "Stop and mask detected insecure services: systemctl stop <service> and systemctl mask <service>."
+  verification_method: "Run systemctl list-units --type=service --state=running and confirm absence of legacy daemons."
   supported_distros: ["all"]
 
 - id: SVC-002
@@ -28,8 +28,8 @@
     actual:
       observation: services.time_synchronization_active
     expected: true
-  remediation_guidance: "Install and enable chrony or systemd-timesyncd: 'timedatectl set-ntp true' or 'systemctl enable --now chrony'."
-  verification_method: "Run 'timedatectl status' and verify 'NTP service: active'."
+  remediation_guidance: "Install and enable chrony or systemd-timesyncd: timedatectl set-ntp true or systemctl enable --now chrony."
+  verification_method: "Run timedatectl status and verify NTP service: active."
   supported_distros: ["all"]
 
 - id: SVC-003
@@ -44,8 +44,8 @@
     actual:
       observation: services.total_running_services
     expected: 75
-  remediation_guidance: "Review running units with 'systemctl list-units --type=service' and disable unneeded services."
-  verification_method: "Check running service count with 'systemctl list-units --type=service --state=running | wc -l'."
+  remediation_guidance: "Review running units with systemctl list-units --type=service and disable unneeded services."
+  verification_method: "Check running service count with systemctl list-units --type=service --state=running | wc -l."
   supported_distros: ["all"]
 
 - id: SVC-004

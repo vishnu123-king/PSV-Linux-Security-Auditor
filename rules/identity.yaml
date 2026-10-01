@@ -13,7 +13,7 @@
       observation: identity.single_uid_zero
     expected: true
   remediation_guidance: "Audit /etc/passwd for any secondary users with UID 0. Remove or reassign UID using 'usermod -u <new-uid> <username>'."
-  verification_method: "Run 'awk -F: '\''($3 == 0) { print $1 }'\'' /etc/passwd' and verify only 'root' is output."
+  verification_method: "Run awk -F: '($3 == 0) { print $1 }' /etc/passwd and verify only root is output."
   supported_distros: ["all"]
 
 - id: ID-002
@@ -29,7 +29,7 @@
       observation: identity.empty_password_accounts
     expected: []
   remediation_guidance: "Lock any accounts with empty passwords using 'passwd -l <user>' or set a strong password."
-  verification_method: "Run 'awk -F: '\''($2 == \"\") { print $1 }'\'' /etc/shadow' and verify no accounts are returned."
+  verification_method: "Run awk -F: '($2 == \"\") { print $1 }' /etc/shadow and verify no accounts are returned."
   supported_distros: ["all"]
 
 - id: ID-003
@@ -38,14 +38,14 @@
   category: identity
   severity: HIGH
   control: identity.weak_hash_accounts
-  rationale: "Legacy DES, MD5, and blowfish hashes are susceptible to offline GPU dictionary and rainbow table cracking. Modern Linux distributions must use SHA-512 (\$6\$) or Yescrypt (\$y\$)."
+  rationale: "Legacy DES, MD5, and blowfish hashes are susceptible to offline GPU dictionary and rainbow table cracking. Modern Linux distributions must use SHA-512 ($6$) or Yescrypt ($y$)."
   condition:
     operator: equals
     actual:
       observation: identity.weak_hash_accounts
     expected: []
   remediation_guidance: "Set 'ENCRYPT_METHOD SHA512' or 'ENCRYPT_METHOD YESCRYPT' in /etc/login.defs and force password reset for flagged users."
-  verification_method: "Audit /etc/shadow password prefixes for \$6\$ or \$y\$."
+  verification_method: "Audit /etc/shadow password prefixes for $6$ or $y$."
   supported_distros: ["all"]
 
 - id: ID-004

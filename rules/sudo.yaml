@@ -12,7 +12,7 @@
     actual:
       observation: sudo.has_wildcard_nopasswd
     expected: false
-  remediation_guidance: "Remove 'NOPASSWD: ALL' directives from /etc/sudoers and /etc/sudoers.d/*. Require password authentication for sudo access."
+  remediation_guidance: "Remove NOPASSWD ALL directives from /etc/sudoers and /etc/sudoers.d/*. Require password authentication for sudo access."
   verification_method: "Run 'sudo -l -U <user>' and verify password prompt is required."
   supported_distros: ["all"]
 
@@ -28,8 +28,8 @@
     actual:
       observation: sudo.use_pty
     expected: true
-  remediation_guidance: "Add 'Defaults use_pty' to /etc/sudoers using visudo."
-  verification_method: "Check 'grep -r \"Defaults.*use_pty\" /etc/sudoers /etc/sudoers.d/'."
+  remediation_guidance: "Add Defaults use_pty to /etc/sudoers using visudo."
+  verification_method: "Check grep -r Defaults.*use_pty /etc/sudoers /etc/sudoers.d/."
   supported_distros: ["all"]
 
 - id: SUDO-003
@@ -44,8 +44,8 @@
     actual:
       observation: sudo.env_reset
     expected: true
-  remediation_guidance: "Add 'Defaults env_reset' in /etc/sudoers."
-  verification_method: "Check 'grep -r \"Defaults.*env_reset\" /etc/sudoers /etc/sudoers.d/'."
+  remediation_guidance: "Add Defaults env_reset in /etc/sudoers."
+  verification_method: "Check grep -r Defaults.*env_reset /etc/sudoers /etc/sudoers.d/."
   supported_distros: ["all"]
 
 - id: SUDO-004
@@ -60,8 +60,8 @@
     actual:
       observation: sudo.secure_path
     expected: true
-  remediation_guidance: "Configure 'Defaults secure_path=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"' in /etc/sudoers."
-  verification_method: "Check 'grep -r \"Defaults.*secure_path\" /etc/sudoers'."
+  remediation_guidance: "Configure Defaults secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin in /etc/sudoers."
+  verification_method: "Check grep -r Defaults.*secure_path /etc/sudoers."
   supported_distros: ["all"]
 
 - id: SUDO-005
@@ -76,6 +76,6 @@
     actual:
       observation: sudo.logfile_configured
     expected: true
-  remediation_guidance: "Add 'Defaults logfile=\"/var/log/sudo.log\"' in /etc/sudoers."
-  verification_method: "Check 'grep -r \"Defaults.*logfile\" /etc/sudoers'."
+  remediation_guidance: "Add Defaults logfile=/var/log/sudo.log in /etc/sudoers."
+  verification_method: "Check grep -r Defaults.*logfile /etc/sudoers."
   supported_distros: ["all"]
