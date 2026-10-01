@@ -219,39 +219,54 @@ main() {
 
     # Write or update .env parameters cleanly
     python3 -c "
-import os, re
+import os
 
 env_file = '${env_file}'
-if os.path.exists(env_file):
-    content = open(env_file, 'r').read()
-else:
-    content = ''
-
-def set_val(content, key, val):
-    pattern = re.compile(rf'^{key}=.*$', re.MULTILINE)
-    if pattern.search(content):
-        return pattern.sub(f'{key}=\"{val}\"', content)
-    else:
-        return content + f'\n{key}=\"{val}\"'
-
-content = set_val(content, 'APP_ENV', '${MODE}')
-content = set_val(content, 'DEBUG', 'false' if '${MODE}' == 'production' else 'true')
+updates = {
+    'APP_ENV': '${MODE}',
+    'DEBUG': 'false' if '${MODE}' == 'production' else 'true',
+}
 
 if 'GENERATED_DATABASE_URL' in os.environ and os.environ['GENERATED_DATABASE_URL']:
-    content = set_val(content, 'DATABASE_URL', os.environ['GENERATED_DATABASE_URL'])
+    updates['DATABASE_URL'] = os.environ['GENERATED_DATABASE_URL']
 
 if 'GENERATED_RABBITMQ_URL' in os.environ and os.environ['GENERATED_RABBITMQ_URL']:
-    content = set_val(content, 'RABBITMQ_URL', os.environ['GENERATED_RABBITMQ_URL'])
+    updates['RABBITMQ_URL'] = os.environ['GENERATED_RABBITMQ_URL']
 
-# Update default insecure secrets if found
-if 'psv-linux-security-auditor-insecure' in content or 'replace-this' in content:
-    content = set_val(content, 'SECRET_KEY', '${secret_key}')
-    content = set_val(content, 'JWT_SECRET', '${jwt_secret}')
+lines = []
+if os.path.exists(env_file):
+    with open(env_file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+content = ''.join(lines)
+if 'replace-this' in content or 'psv-linux-security-auditor-insecure' in content:
+    updates['SECRET_KEY'] = '${secret_key}'
+    updates['JWT_SECRET'] = '${jwt_secret}'
 
 if 'AdminSecurePassword123!' in content:
-    content = set_val(content, 'INITIAL_ADMIN_PASSWORD', '${admin_pass}')
+    updates['INITIAL_ADMIN_PASSWORD'] = '${admin_pass}'
 
-open(env_file, 'w').write(content)
+seen = set()
+new_lines = []
+for line in lines:
+    trimmed = line.strip()
+    matched_key = None
+    for k in updates:
+        if trimmed.startswith(f'{k}=') or trimmed.startswith(f'export {k}='):
+            matched_key = k
+            break
+    if matched_key:
+        new_lines.append(f'{matched_key}=\"{updates[matched_key]}\"\n')
+        seen.add(matched_key)
+    else:
+        new_lines.append(line)
+
+for k, v in updates.items():
+    if k not in seen:
+        new_lines.append(f'{k}=\"{v}\"\n')
+
+with open(env_file, 'w', encoding='utf-8') as f:
+    f.writelines(new_lines)
 " 2>/dev/null || true
 
     chmod 0600 "${env_file}"

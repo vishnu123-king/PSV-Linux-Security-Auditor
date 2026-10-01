@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 from sqlalchemy import (
     Boolean,
+    Column,
     DateTime,
     Enum,
     Float,
@@ -91,8 +92,8 @@ class VerificationStatus(str, enum.Enum):
 profile_rules = Table(
     "profile_rules",
     Base.metadata,
-    mapped_column("profile_id", String(36), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True),
-    mapped_column("rule_id", String(64), ForeignKey("rules.id", ondelete="CASCADE"), primary_key=True),
+    Column("profile_id", String(36), ForeignKey("profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("rule_id", String(64), ForeignKey("rules.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
