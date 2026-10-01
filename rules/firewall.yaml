@@ -1,0 +1,65 @@
+# Host-based Firewall Security Benchmark Rules (CIS Benchmark 3.5)
+
+- id: FW-001
+  name: Enable Host-Based Packet Filtering Firewall
+  version: 1.0.0
+  category: firewall
+  severity: HIGH
+  control: firewall.any_firewall_active
+  rationale: A host-based packet filter (UFW, nftables, or iptables) restricts access to listening services to only authorized IP addresses and network interfaces.
+  condition:
+    operator: equals
+    actual:
+      observation: firewall.any_firewall_active
+    expected: true
+  remediation_guidance: Enable and configure UFW with 'ufw enable' or establish baseline iptables/nftables filtering chains.
+  verification_method: Run 'ufw status' or 'iptables -L -n -v' to confirm active filtering.
+  supported_distros: ["all"]
+
+- id: FW-002
+  name: Configure Default Drop Incoming Policy on Firewall
+  version: 1.0.0
+  category: firewall
+  severity: HIGH
+  control: firewall.ufw_default_incoming_deny
+  rationale: A default deny incoming policy adheres to the principle of least privilege, ensuring unapproved inbound connections are blocked by default.
+  condition:
+    operator: equals
+    actual:
+      observation: firewall.ufw_default_incoming_deny
+    expected: true
+  remediation_guidance: Run 'ufw default deny incoming' and allow only required management ports (e.g. 'ufw allow ssh').
+  verification_method: Run 'ufw status verbose' and check default incoming policy is deny.
+  supported_distros: ["debian", "ubuntu", "all"]
+
+- id: FW-003
+  name: Ensure Active UFW Service
+  version: 1.0.0
+  category: firewall
+  severity: MEDIUM
+  control: firewall.ufw_active
+  rationale: On Debian/Ubuntu systems, UFW provides an accessible, standardized control surface for netfilter rules.
+  condition:
+    operator: equals
+    actual:
+      observation: firewall.ufw_active
+    expected: true
+  remediation_guidance: Execute 'ufw enable' and verify 'systemctl status ufw'.
+  verification_method: Verify 'ufw status' prints 'Status: active'.
+  supported_distros: ["ubuntu", "debian"]
+
+- id: FW-004
+  name: Ensure Iptables Rules Are Loaded
+  version: 1.0.0
+  category: firewall
+  severity: MEDIUM
+  control: firewall.iptables_rules_present
+  rationale: If legacy iptables is utilized instead of UFW, explicit rules must be actively loaded in the kernel filter table.
+  condition:
+    operator: equals
+    actual:
+      observation: firewall.iptables_rules_present
+    expected: true
+  remediation_guidance: Load persistent iptables rules using iptables-persistent or netfilter-persistent.
+  verification_method: Check 'iptables -L -n' for configured rules.
+  supported_distros: ["all"]

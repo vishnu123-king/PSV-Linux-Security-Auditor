@@ -1,0 +1,113 @@
+# Linux Kernel Self-Protection Benchmark Rules (CIS Benchmark 1.5)
+
+- id: KERN-001
+  name: Enable Full Address Space Layout Randomization (ASLR)
+  version: 1.0.0
+  category: kernel
+  severity: HIGH
+  control: kernel.randomize_va_space
+  rationale: Full ASLR (setting 2) randomizes positions of stack, virtual dynamic shared objects, heap, and mmap memory spaces, making buffer overflow and ROP exploits difficult.
+  condition:
+    operator: equals
+    actual:
+      observation: kernel.randomize_va_space
+    expected: 2
+  remediation_guidance: Set 'kernel.randomize_va_space = 2' in /etc/sysctl.d/60-kernel-hardening.conf and reload with 'sysctl -p'.
+  verification_method: Run 'sysctl kernel.randomize_va_space' and confirm output is 2.
+  supported_distros: ["all"]
+
+- id: KERN-002
+  name: Restrict Kernel Pointer Leaks (kptr_restrict)
+  version: 1.0.0
+  category: kernel
+  severity: HIGH
+  control: kernel.kptr_restrict
+  rationale: Restricting kernel pointer exposure via /proc and dmesg stops unprivileged users from locating kernel data structures to construct kernel exploits.
+  condition:
+    operator: greater_than_or_equal
+    actual:
+      observation: kernel.kptr_restrict
+    expected: 1
+  remediation_guidance: Set 'kernel.kptr_restrict = 2' in /etc/sysctl.conf and run 'sysctl -w kernel.kptr_restrict=2'.
+  verification_method: Check 'sysctl kernel.kptr_restrict'.
+  supported_distros: ["all"]
+
+- id: KERN-003
+  name: Restrict Unprivileged dmesg Access (dmesg_restrict)
+  version: 1.0.0
+  category: kernel
+  severity: MEDIUM
+  control: kernel.dmesg_restrict
+  rationale: Kernel ring buffer logs (dmesg) contain hardware and memory addresses useful for exploit development. Restricting access prevents unprivileged inspection.
+  condition:
+    operator: equals
+    actual:
+      observation: kernel.dmesg_restrict
+    expected: 1
+  remediation_guidance: Set 'kernel.dmesg_restrict = 1' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl kernel.dmesg_restrict'.
+  supported_distros: ["all"]
+
+- id: KERN-004
+  name: Enable Protected Hardlinks (fs.protected_hardlinks)
+  version: 1.0.0
+  category: kernel
+  severity: MEDIUM
+  control: kernel.protected_hardlinks
+  rationale: Restricts creation of hardlinks to files that the user owns or has write permissions for, preventing race condition attacks against /tmp files.
+  condition:
+    operator: equals
+    actual:
+      observation: kernel.protected_hardlinks
+    expected: true
+  remediation_guidance: Set 'fs.protected_hardlinks = 1' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl fs.protected_hardlinks'.
+  supported_distros: ["all"]
+
+- id: KERN-005
+  name: Enable Protected Symlinks (fs.protected_symlinks)
+  version: 1.0.0
+  category: kernel
+  severity: MEDIUM
+  control: kernel.protected_symlinks
+  rationale: Disallows following symlinks in sticky world-writable directories unless the follower owns either the symlink or the target file.
+  condition:
+    operator: equals
+    actual:
+      observation: kernel.protected_symlinks
+    expected: true
+  remediation_guidance: Set 'fs.protected_symlinks = 1' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl fs.protected_symlinks'.
+  supported_distros: ["all"]
+
+- id: KERN-006
+  name: Disable SUID Core Dumps (fs.suid_dumpable)
+  version: 1.0.0
+  category: kernel
+  severity: HIGH
+  control: kernel.suid_dumpable
+  rationale: When a setuid binary crashes, it must not write a memory core dump because unprivileged local attackers could inspect privileged process memory.
+  condition:
+    operator: equals
+    actual:
+      observation: kernel.suid_dumpable
+    expected: 0
+  remediation_guidance: Add 'fs.suid_dumpable = 0' to /etc/sysctl.conf.
+  verification_method: Run 'sysctl fs.suid_dumpable' and confirm 0.
+  supported_distros: ["all"]
+
+- id: KERN-007
+  name: Restrict Unprivileged eBPF Execution
+  version: 1.0.0
+  category: kernel
+  severity: HIGH
+  control: kernel.unprivileged_bpf_disabled
+  rationale: Unprivileged eBPF has been a frequent source of kernel privilege escalation vulnerabilities and side-channel timing attacks.
+  condition:
+    operator: greater_than_or_equal
+    actual:
+      observation: kernel.unprivileged_bpf_disabled
+    expected: 1
+  remediation_guidance: Add 'kernel.unprivileged_bpf_disabled = 1' to /etc/sysctl.d/99-sysctl.conf.
+  verification_method: Run 'sysctl kernel.unprivileged_bpf_disabled'.
+  supported_distros: ["all"]

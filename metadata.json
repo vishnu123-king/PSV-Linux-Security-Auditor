@@ -1,0 +1,6 @@
+{
+  "name": "PSV Linux Security Auditor",
+  "description": "Production-oriented Linux security auditor with automated SSH collectors, 50+ benchmark rules, drift detection, and safe remediation workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

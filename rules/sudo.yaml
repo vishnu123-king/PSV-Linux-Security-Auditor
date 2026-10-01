@@ -1,0 +1,81 @@
+# Sudoers Configuration Security Benchmark Rules (CIS Benchmark 5.3)
+
+- id: SUDO-001
+  name: Restrict Wildcard NOPASSWD Escalation
+  version: 1.0.0
+  category: sudo
+  severity: CRITICAL
+  control: sudo.has_wildcard_nopasswd
+  rationale: Allowing accounts or groups to execute all commands without a password allows unauthorized processes running under that user to trivially gain root privileges.
+  condition:
+    operator: equals
+    actual:
+      observation: sudo.has_wildcard_nopasswd
+    expected: false
+  remediation_guidance: Remove 'NOPASSWD: ALL' directives from /etc/sudoers and /etc/sudoers.d/*. Require password authentication for sudo access.
+  verification_method: Run 'sudo -l -U <user>' and verify password prompt is required.
+  supported_distros: ["all"]
+
+- id: SUDO-002
+  name: Enable sudo use_pty Directive
+  version: 1.0.0
+  category: sudo
+  severity: MEDIUM
+  control: sudo.use_pty
+  rationale: Enforcing use_pty forces sudo commands to run within a dedicated pseudo-terminal, defeating terminal hijacking attacks by malicious child processes.
+  condition:
+    operator: equals
+    actual:
+      observation: sudo.use_pty
+    expected: true
+  remediation_guidance: Add 'Defaults use_pty' to /etc/sudoers using visudo.
+  verification_method: Check 'grep -r "Defaults.*use_pty" /etc/sudoers /etc/sudoers.d/'.
+  supported_distros: ["all"]
+
+- id: SUDO-003
+  name: Enforce sudo env_reset
+  version: 1.0.0
+  category: sudo
+  severity: HIGH
+  control: sudo.env_reset
+  rationale: The env_reset option resets environment variables to a safe minimal default, preventing LD_PRELOAD and PATH injection attacks during elevated execution.
+  condition:
+    operator: equals
+    actual:
+      observation: sudo.env_reset
+    expected: true
+  remediation_guidance: Add 'Defaults env_reset' in /etc/sudoers.
+  verification_method: Check 'grep -r "Defaults.*env_reset" /etc/sudoers /etc/sudoers.d/'.
+  supported_distros: ["all"]
+
+- id: SUDO-004
+  name: Enforce sudo secure_path
+  version: 1.0.0
+  category: sudo
+  severity: HIGH
+  control: sudo.secure_path
+  rationale: Restricting execution search path prevents users from executing trojanized binaries placed in current or writable working directories.
+  condition:
+    operator: equals
+    actual:
+      observation: sudo.secure_path
+    expected: true
+  remediation_guidance: Configure 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' in /etc/sudoers.
+  verification_method: Check 'grep -r "Defaults.*secure_path" /etc/sudoers'.
+  supported_distros: ["all"]
+
+- id: SUDO-005
+  name: Configure Dedicated Sudo Log File
+  version: 1.0.0
+  category: sudo
+  severity: MEDIUM
+  control: sudo.logfile_configured
+  rationale: Directing sudo execution logs to a dedicated file allows security analysts to monitor privileged operations without noise from general syslog.
+  condition:
+    operator: equals
+    actual:
+      observation: sudo.logfile_configured
+    expected: true
+  remediation_guidance: Add 'Defaults logfile="/var/log/sudo.log"' in /etc/sudoers.
+  verification_method: Check 'grep -r "Defaults.*logfile" /etc/sudoers'.
+  supported_distros: ["all"]

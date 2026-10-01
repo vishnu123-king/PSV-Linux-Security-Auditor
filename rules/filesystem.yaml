@@ -1,0 +1,97 @@
+# Filesystem and Mount Security Benchmark Rules (CIS Benchmark 1.1)
+
+- id: FS-001
+  name: Mount /tmp with nodev Option
+  version: 1.0.0
+  category: filesystem
+  severity: MEDIUM
+  control: filesystem.tmp_nodev
+  rationale: The nodev mount option prevents creation and execution of block or character device nodes in temporary storage.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.tmp_nodev
+    expected: true
+  remediation_guidance: Edit /etc/fstab and append 'nodev' to the options field for /tmp partition, then run 'mount -o remount /tmp'.
+  verification_method: Run 'findmnt -n /tmp' and verify nodev is in options.
+  supported_distros: ["all"]
+
+- id: FS-002
+  name: Mount /tmp with nosuid Option
+  version: 1.0.0
+  category: filesystem
+  severity: HIGH
+  control: filesystem.tmp_nosuid
+  rationale: The nosuid option prevents setuid and setgid permissions from taking effect in world-writable directories, blocking privilege escalation attempts.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.tmp_nosuid
+    expected: true
+  remediation_guidance: Edit /etc/fstab and append 'nosuid' to /tmp options.
+  verification_method: Run 'findmnt -n /tmp' and verify nosuid is listed.
+  supported_distros: ["all"]
+
+- id: FS-003
+  name: Mount /tmp with noexec Option
+  version: 1.0.0
+  category: filesystem
+  severity: MEDIUM
+  control: filesystem.tmp_noexec
+  rationale: Disallowing direct binary execution in /tmp prevents drop-and-execute web shell or staging payloads from running.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.tmp_noexec
+    expected: true
+  remediation_guidance: Append 'noexec' to /tmp mount options in /etc/fstab.
+  verification_method: Run 'findmnt -n /tmp' and verify noexec is present.
+  supported_distros: ["all"]
+
+- id: FS-004
+  name: Mount /dev/shm with nodev and nosuid
+  version: 1.0.0
+  category: filesystem
+  severity: HIGH
+  control: filesystem.shm_nosuid
+  rationale: Shared memory tmpfs space (/dev/shm) should be restricted to prevent execution of unauthorized setuid binaries.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.shm_nosuid
+    expected: true
+  remediation_guidance: Add 'nodev,nosuid,noexec' to /dev/shm in /etc/fstab.
+  verification_method: Check 'findmnt -n /dev/shm'.
+  supported_distros: ["all"]
+
+- id: FS-005
+  name: Restrict Core Dumps for System Accounts
+  version: 1.0.0
+  category: filesystem
+  severity: MEDIUM
+  control: filesystem.core_dumps_restricted
+  rationale: Core dumps may contain sensitive memory fragments (passwords, cryptographic keys). Restricting core dumps mitigates data leakage upon process crashes.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.core_dumps_restricted
+    expected: true
+  remediation_guidance: Add '* hard core 0' to /etc/security/limits.conf and set 'fs.suid_dumpable = 0' in /etc/sysctl.conf.
+  verification_method: Check 'grep "* hard core 0" /etc/security/limits.conf'.
+  supported_distros: ["all"]
+
+- id: FS-006
+  name: Ensure No World-Writable System Files Exist
+  version: 1.0.0
+  category: filesystem
+  severity: HIGH
+  control: filesystem.world_writable_system_files
+  rationale: World-writable files in system directories (/etc, /bin, /sbin) can be modified by any unprivileged user or process, compromising system integrity.
+  condition:
+    operator: equals
+    actual:
+      observation: filesystem.world_writable_system_files
+    expected: 0
+  remediation_guidance: Remove write permissions for others using 'chmod o-w <file>'.
+  verification_method: Run 'find /etc /bin /sbin -xdev -type f -perm -0002'.
+  supported_distros: ["all"]

@@ -1,0 +1,81 @@
+# System Logging and Auditd Security Rules (CIS Benchmark 4.1 / 4.2)
+
+- id: LOG-001
+  name: Ensure Linux Audit Daemon (auditd) Is Enabled and Running
+  version: 1.0.0
+  category: logging
+  severity: HIGH
+  control: logging.auditd_enabled
+  rationale: The Linux Auditing System provides detailed kernel-level event tracing (syscalls, file modifications, identity changes) necessary for compliance and digital forensics.
+  condition:
+    operator: equals
+    actual:
+      observation: logging.auditd_enabled
+    expected: true
+  remediation_guidance: Install and enable auditd using 'systemctl enable --now auditd'.
+  verification_method: Check 'auditctl -s' and verify 'enabled 1' or 'enabled 2'.
+  supported_distros: ["all"]
+
+- id: LOG-002
+  name: Ensure Audit Rules Are Configured
+  version: 1.0.0
+  category: logging
+  severity: HIGH
+  control: logging.auditd_rules_configured
+  rationale: Having auditd enabled without security audit rules does not record critical changes to authentication files, sudoers, or kernel modules.
+  condition:
+    operator: equals
+    actual:
+      observation: logging.auditd_rules_configured
+    expected: true
+  remediation_guidance: Populate /etc/audit/rules.d/audit.rules with benchmark audit watches and execute 'augenrules --load'.
+  verification_method: Run 'auditctl -l' and verify active watches exist.
+  supported_distros: ["all"]
+
+- id: LOG-003
+  name: Configure Auditd Action When Log Storage Is Low
+  version: 1.0.0
+  category: logging
+  severity: MEDIUM
+  control: logging.auditd_max_log_file_action
+  rationale: Proper rotation or archiving action ensures auditd continues capturing security events when storage capacity reaches its limit.
+  condition:
+    operator: in
+    actual:
+      observation: logging.auditd_max_log_file_action
+    expected: ["ROTATE", "KEEP_LOGS", "SYSLOG"]
+  remediation_guidance: Configure 'max_log_file_action = ROTATE' in /etc/audit/auditd.conf.
+  verification_method: Check 'grep max_log_file_action /etc/audit/auditd.conf'.
+  supported_distros: ["all"]
+
+- id: LOG-004
+  name: Configure Persistent Storage for systemd-journald
+  version: 1.0.0
+  category: logging
+  severity: MEDIUM
+  control: logging.journald_storage_persistent
+  rationale: Persistent journal storage ensures system logs survive unexpected reboots, crashes, or power loss.
+  condition:
+    operator: equals
+    actual:
+      observation: logging.journald_storage_persistent
+    expected: true
+  remediation_guidance: Set 'Storage=persistent' in /etc/systemd/journald.conf and restart systemd-journald.
+  verification_method: Check /etc/systemd/journald.conf and /var/log/journal.
+  supported_distros: ["all"]
+
+- id: LOG-005
+  name: Configure Centralized Remote Syslog Forwarding
+  version: 1.0.0
+  category: logging
+  severity: LOW
+  control: logging.remote_syslog_configured
+  rationale: Forwarding logs off-host prevents attackers from wiping local tracks if they achieve root privilege on the endpoint.
+  condition:
+    operator: equals
+    actual:
+      observation: logging.remote_syslog_configured
+    expected: true
+  remediation_guidance: Configure remote SIEM or log aggregator destination in /etc/rsyslog.conf (e.g. '*.* @@siem.corp.internal:514').
+  verification_method: Inspect /etc/rsyslog.conf or /etc/rsyslog.d/ for remote forwarder targets.
+  supported_distros: ["all"]

@@ -1,0 +1,97 @@
+# Network Stack Hardening Benchmark Rules (CIS Benchmark 3.1 / 3.2)
+
+- id: NET-001
+  name: Prohibit Insecure Plaintext Network Services (Telnet/FTP/RSH)
+  version: 1.0.0
+  category: network
+  severity: CRITICAL
+  control: network.insecure_ports_open
+  rationale: Legacy protocols transmit credentials and sessions unencrypted across the network, making them vulnerable to packet sniffing and man-in-the-middle attacks.
+  condition:
+    operator: equals
+    actual:
+      observation: network.insecure_ports_open
+    expected: false
+  remediation_guidance: Stop and mask insecure service daemons (telnet, vsftpd, rsh) using 'systemctl disable --now <service>'. Replace with SSH and SFTP.
+  verification_method: Run 'ss -tulpn' and verify ports 21, 23, 514 are not listening.
+  supported_distros: ["all"]
+
+- id: NET-002
+  name: Disable IPv4 Packet Forwarding on Non-Router Hosts
+  version: 1.0.0
+  category: network
+  severity: HIGH
+  control: network.ip_forwarding
+  rationale: Unless a host operates as a dedicated router, packet forwarding should be disabled to prevent routing malicious packets between isolated networks.
+  condition:
+    operator: equals
+    actual:
+      observation: network.ip_forwarding
+    expected: false
+  remediation_guidance: Set 'net.ipv4.ip_forward = 0' in /etc/sysctl.conf and run 'sysctl -p'.
+  verification_method: Verify 'sysctl net.ipv4.ip_forward' outputs 0.
+  supported_distros: ["all"]
+
+- id: NET-003
+  name: Disable Sending of ICMP Redirects
+  version: 1.0.0
+  category: network
+  severity: MEDIUM
+  control: network.send_redirects
+  rationale: ICMP redirect sending should be disabled because attackers can forge redirect packets to alter routing tables and hijack traffic.
+  condition:
+    operator: equals
+    actual:
+      observation: network.send_redirects
+    expected: false
+  remediation_guidance: Set 'net.ipv4.conf.all.send_redirects = 0' and 'net.ipv4.conf.default.send_redirects = 0' in /etc/sysctl.d/99-sysctl.conf.
+  verification_method: Run 'sysctl net.ipv4.conf.all.send_redirects' and verify 0.
+  supported_distros: ["all"]
+
+- id: NET-004
+  name: Disable Acceptance of ICMP Redirects
+  version: 1.0.0
+  category: network
+  severity: MEDIUM
+  control: network.accept_redirects
+  rationale: Accepting ICMP redirects allows malicious actors on the local subnet to redirect outgoing traffic through attacker-controlled gateways.
+  condition:
+    operator: equals
+    actual:
+      observation: network.accept_redirects
+    expected: false
+  remediation_guidance: Set 'net.ipv4.conf.all.accept_redirects = 0' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl net.ipv4.conf.all.accept_redirects'.
+  supported_distros: ["all"]
+
+- id: NET-005
+  name: Disable Source Routed Packet Acceptance
+  version: 1.0.0
+  category: network
+  severity: HIGH
+  control: network.accept_source_route
+  rationale: Source routed packets allow the sender to dictate the network path, circumventing perimeter firewalls and network access controls.
+  condition:
+    operator: equals
+    actual:
+      observation: network.accept_source_route
+    expected: false
+  remediation_guidance: Set 'net.ipv4.conf.all.accept_source_route = 0' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl net.ipv4.conf.all.accept_source_route'.
+  supported_distros: ["all"]
+
+- id: NET-006
+  name: Enable TCP SYN Cookies Protection
+  version: 1.0.0
+  category: network
+  severity: HIGH
+  control: network.tcp_syncookies
+  rationale: TCP SYN Cookies provide defense against SYN flood Denial of Service attacks by postponing socket allocation until the handshake ACK is received.
+  condition:
+    operator: equals
+    actual:
+      observation: network.tcp_syncookies
+    expected: true
+  remediation_guidance: Add 'net.ipv4.tcp_syncookies = 1' in /etc/sysctl.conf.
+  verification_method: Check 'sysctl net.ipv4.tcp_syncookies'.
+  supported_distros: ["all"]

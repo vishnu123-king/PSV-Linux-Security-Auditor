@@ -1,0 +1,81 @@
+# Pluggable Authentication Modules (PAM) Hardening Rules (CIS Benchmark 5.3)
+
+- id: PAM-001
+  name: Enforce Minimum Password Length via pam_pwquality
+  version: 1.0.0
+  category: pam
+  severity: MEDIUM
+  control: pam.password_minlen
+  rationale: Enforcing at least 14 characters for user passwords increases resistance against brute-force and dictionary attacks exponentially.
+  condition:
+    operator: greater_than_or_equal
+    actual:
+      observation: pam.password_minlen
+    expected: 14
+  remediation_guidance: Configure 'minlen = 14' in /etc/security/pwquality.conf.
+  verification_method: Check 'grep -i minlen /etc/security/pwquality.conf'.
+  supported_distros: ["all"]
+
+- id: PAM-002
+  name: Enforce Character Class Complexity in Password Quality
+  version: 1.0.0
+  category: pam
+  severity: MEDIUM
+  control: pam.password_complexity_enforced
+  rationale: Mandating uppercase, lowercase, and digit character classes prevents predictable dictionary passwords.
+  condition:
+    operator: equals
+    actual:
+      observation: pam.password_complexity_enforced
+    expected: true
+  remediation_guidance: Set 'dcredit = -1', 'ucredit = -1', 'lcredit = -1' in /etc/security/pwquality.conf.
+  verification_method: Check /etc/security/pwquality.conf for negative credit settings.
+  supported_distros: ["all"]
+
+- id: PAM-003
+  name: Enable Account Lockout on Failed Authentication Attempts
+  version: 1.0.0
+  category: pam
+  severity: HIGH
+  control: pam.account_lockout_enabled
+  rationale: Locking accounts after repeated failed login attempts mitigates online brute-force attacks against console, sudo, and PAM services.
+  condition:
+    operator: equals
+    actual:
+      observation: pam.account_lockout_enabled
+    expected: true
+  remediation_guidance: Enable pam_faillock in /etc/pam.d/common-auth (or authselect select sssd with-faillock).
+  verification_method: Check for pam_faillock.so entries in /etc/pam.d/common-auth.
+  supported_distros: ["all"]
+
+- id: PAM-004
+  name: Restrict Lockout Threshold to 5 or Fewer Attempts
+  version: 1.0.0
+  category: pam
+  severity: MEDIUM
+  control: pam.lockout_deny_attempts
+  rationale: Setting lockout threshold to 5 or fewer attempts restricts the search space available to adversaries attempting dictionary guessing.
+  condition:
+    operator: less_than_or_equal
+    actual:
+      observation: pam.lockout_deny_attempts
+    expected: 5
+  remediation_guidance: Configure 'deny = 5' on pam_faillock lines in /etc/security/faillock.conf or /etc/pam.d/common-auth.
+  verification_method: Check 'grep deny /etc/security/faillock.conf' or PAM files.
+  supported_distros: ["all"]
+
+- id: PAM-005
+  name: Enforce Password History Reuse Restriction
+  version: 1.0.0
+  category: pam
+  severity: LOW
+  control: pam.password_history_remember
+  rationale: Preventing reuse of recent passwords ensures users do not switch between two identical passwords when prompted to rotate.
+  condition:
+    operator: greater_than_or_equal
+    actual:
+      observation: pam.password_history_remember
+    expected: 5
+  remediation_guidance: Configure 'remember=5' in pam_pwhistory.so line in /etc/pam.d/common-password.
+  verification_method: Verify remember option in /etc/pam.d/common-password.
+  supported_distros: ["all"]

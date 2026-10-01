@@ -1,0 +1,113 @@
+# OpenSSH Server Security Benchmark Rules (CIS Benchmark 5.2)
+
+- id: SSH-001
+  name: Disable SSH Root Login
+  version: 1.0.0
+  category: ssh
+  severity: HIGH
+  control: ssh.permit_root_login
+  rationale: Disallowing direct root login forces administrators to authenticate as their own named account, ensuring accountability and audit trails before privilege elevation.
+  condition:
+    operator: in
+    actual:
+      observation: ssh.permit_root_login
+    expected: ["no", "prohibit-password"]
+  remediation_guidance: Edit /etc/ssh/sshd_config and set 'PermitRootLogin no' (or 'prohibit-password'), then execute 'systemctl reload sshd'.
+  verification_method: Run 'sshd -T | grep -i permitrootlogin' and ensure output is 'permitrootlogin no'.
+  supported_distros: ["debian", "ubuntu", "rhel", "rocky", "fedora", "all"]
+
+- id: SSH-002
+  name: Disable SSH Password Authentication
+  version: 1.0.0
+  category: ssh
+  severity: HIGH
+  control: ssh.password_authentication
+  rationale: Disabling password authentication mandates cryptographic SSH key pairs, neutralizing automated credential brute-force and dictionary attacks.
+  condition:
+    operator: equals
+    actual:
+      observation: ssh.password_authentication
+    expected: false
+  remediation_guidance: Edit /etc/ssh/sshd_config and set 'PasswordAuthentication no', then execute 'systemctl reload sshd'.
+  verification_method: Run 'sshd -T | grep -i passwordauthentication' and verify it prints 'passwordauthentication no'.
+  supported_distros: ["all"]
+
+- id: SSH-003
+  name: Disable SSH Empty Passwords
+  version: 1.0.0
+  category: ssh
+  severity: CRITICAL
+  control: ssh.permit_empty_passwords
+  rationale: Accounts with empty passwords allow unauthenticated network access to the host without any credentials.
+  condition:
+    operator: equals
+    actual:
+      observation: ssh.permit_empty_passwords
+    expected: false
+  remediation_guidance: Edit /etc/ssh/sshd_config and ensure 'PermitEmptyPasswords no' is present, then reload sshd.
+  verification_method: Run 'sshd -T | grep -i permitemptypasswords' and verify 'permitemptypasswords no'.
+  supported_distros: ["all"]
+
+- id: SSH-004
+  name: Disable SSH X11 Forwarding
+  version: 1.0.0
+  category: ssh
+  severity: MEDIUM
+  control: ssh.x11_forwarding
+  rationale: X11 forwarding allows remote clients to interact with local X11 display servers, creating risks of keystroke sniffing and window injection on servers without desktop GUIs.
+  condition:
+    operator: equals
+    actual:
+      observation: ssh.x11_forwarding
+    expected: false
+  remediation_guidance: Set 'X11Forwarding no' in /etc/ssh/sshd_config.
+  verification_method: Run 'sshd -T | grep -i x11forwarding' and verify 'x11forwarding no'.
+  supported_distros: ["all"]
+
+- id: SSH-005
+  name: Limit SSH Maximum Authentication Tries
+  version: 1.0.0
+  category: ssh
+  severity: MEDIUM
+  control: ssh.max_auth_tries
+  rationale: Setting MaxAuthTries to 4 or fewer restricts automated online credential guessing per SSH handshake.
+  condition:
+    operator: less_than_or_equal
+    actual:
+      observation: ssh.max_auth_tries
+    expected: 4
+  remediation_guidance: Configure 'MaxAuthTries 4' in /etc/ssh/sshd_config.
+  verification_method: Check 'sshd -T | grep -i maxauthtries'.
+  supported_distros: ["all"]
+
+- id: SSH-006
+  name: Configure SSH Client Alive Idle Timeout
+  version: 1.0.0
+  category: ssh
+  severity: MEDIUM
+  control: ssh.client_alive_interval
+  rationale: Setting ClientAliveInterval ensures unattended idle SSH sessions terminate automatically to reduce exposure on unlocked operator consoles.
+  condition:
+    operator: greater_than
+    actual:
+      observation: ssh.client_alive_interval
+    expected: 0
+  remediation_guidance: Set 'ClientAliveInterval 300' and 'ClientAliveCountMax 3' in /etc/ssh/sshd_config.
+  verification_method: Check 'sshd -T | grep -i clientaliveinterval'.
+  supported_distros: ["all"]
+
+- id: SSH-007
+  name: Disable SSH Hostbased Authentication
+  version: 1.0.0
+  category: ssh
+  severity: HIGH
+  control: ssh.hostbased_authentication
+  rationale: Hostbased authentication relies on host trust (.rhosts/shosts), which is vulnerable to IP spoofing and compromised neighbor nodes.
+  condition:
+    operator: equals
+    actual:
+      observation: ssh.hostbased_authentication
+    expected: false
+  remediation_guidance: Ensure 'HostbasedAuthentication no' is set in /etc/ssh/sshd_config.
+  verification_method: Check 'sshd -T | grep -i hostbasedauthentication'.
+  supported_distros: ["all"]

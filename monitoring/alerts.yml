@@ -1,0 +1,20 @@
+groups:
+  - name: psv_security_alerts
+    rules:
+      - alert: CriticalComplianceDeficiency
+        expr: psv_findings_total{severity="CRITICAL"} > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical security findings detected on managed Linux host"
+          description: "One or more critical benchmark violations (UID 0 account, sudo wildcard, or unauthenticated SSH) require immediate remediation."
+
+      - alert: HighAssessmentFailureRate
+        expr: rate(psv_assessments_failed_total[15m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High assessment failure rate"
+          description: "Collector or SSH connection failures exceed normal operating threshold."

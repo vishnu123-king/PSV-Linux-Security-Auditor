@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "psv-linux-security-auditor"
+version = "1.0.0"
+description = "Production-oriented Linux security auditor with automated collectors, YAML rule engine, drift detection, and remediation planning"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "PSV Security Engineering Team", email = "security@psv-auditor.local"}
+]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "sqlalchemy>=2.0.28",
+    "alembic>=1.13.1",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.20.0",
+    "asyncssh>=2.14.2",
+    "aio-pika>=9.4.0",
+    "pyyaml>=6.0.1",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "rich>=13.7.1",
+    "typer>=0.12.0",
+    "jinja2>=3.1.3",
+    "cryptography>=42.0.5"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.5",
+    "ruff>=0.3.2",
+    "mypy>=1.9.0",
+    "coverage>=7.4.4"
+]
+
+[project.scripts]
+psv-worker = "backend.app.workers.assessment_worker:main"

@@ -1,0 +1,81 @@
+# Container Runtime Security Benchmark Rules (CIS Docker Benchmark)
+
+- id: CONT-001
+  name: Enable User Namespace Remapping in Docker Daemon
+  version: 1.0.0
+  category: containers
+  severity: HIGH
+  control: containers.userns_remap_enabled
+  rationale: User namespace remapping ensures container root (UID 0) maps to an unprivileged high UID on the host, preventing host root takeover upon container breakout.
+  condition:
+    operator: equals
+    actual:
+      observation: containers.userns_remap_enabled
+    expected: true
+  remediation_guidance: Configure '"userns-remap": "default"' in /etc/docker/daemon.json and restart docker.
+  verification_method: Check /etc/docker/daemon.json for userns-remap property.
+  supported_distros: ["all"]
+
+- id: CONT-002
+  name: Enable Live Restore for Docker Daemon
+  version: 1.0.0
+  category: containers
+  severity: MEDIUM
+  control: containers.live_restore_enabled
+  rationale: Live restore allows containers to remain running when the Docker daemon undergoes updates or restarts, preventing service interruptions.
+  condition:
+    operator: equals
+    actual:
+      observation: containers.live_restore_enabled
+    expected: true
+  remediation_guidance: Add '"live-restore": true' to /etc/docker/daemon.json.
+  verification_method: Check 'docker info --format "{{.LiveRestoreEnabled}}"'.
+  supported_distros: ["all"]
+
+- id: CONT-003
+  name: Enforce no-new-privileges by Default for Containers
+  version: 1.0.0
+  category: containers
+  severity: HIGH
+  control: containers.no_new_privileges_default
+  rationale: Disallows container processes from acquiring additional privileges via setuid or setgid binaries inside container images.
+  condition:
+    operator: equals
+    actual:
+      observation: containers.no_new_privileges_default
+    expected: true
+  remediation_guidance: Add '"no-new-privileges": true' in /etc/docker/daemon.json.
+  verification_method: Inspect /etc/docker/daemon.json.
+  supported_distros: ["all"]
+
+- id: CONT-004
+  name: Restrict Inter-Container Network Communication (ICC)
+  version: 1.0.0
+  category: containers
+  severity: MEDIUM
+  control: containers.inter_container_communication_disabled
+  rationale: Disabling ICC on the default bridge network prevents unlinked containers from sniffing or attacking each other over the bridge.
+  condition:
+    operator: equals
+    actual:
+      observation: containers.inter_container_communication_disabled
+    expected: true
+  remediation_guidance: Add '"icc": false' to /etc/docker/daemon.json.
+  verification_method: Inspect /etc/docker/daemon.json for icc setting.
+  supported_distros: ["all"]
+
+- id: CONT-005
+  name: Monitor Running Container Workloads
+  version: 1.0.0
+  category: containers
+  severity: LOW
+  control: containers.running_container_count
+  rationale: Container density and rogue unauthorized workloads should be continuously tracked.
+  condition:
+    operator: greater_than_or_equal
+    actual:
+      observation: containers.running_container_count
+    expected: 0
+  remediation_guidance: Stop unauthorized containers with 'docker stop <container_id>'.
+  verification_method: Check 'docker ps -q | wc -l'.
+  supported_distros: ["all"]

@@ -1,0 +1,75 @@
+# PSV Linux Security Auditor - Optional Docker Compose Environment
+# Note: Docker is OPTIONAL. Native development without Docker is fully supported.
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: psv-postgres
+    environment:
+      POSTGRES_DB: psv_auditor
+      POSTGRES_USER: psv
+      POSTGRES_PASSWORD: psv_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U psv -d psv_auditor"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: psv-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: psv-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://psv:psv_secure_password@postgres:5432/psv_auditor
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      APP_ENV: production
+      PORT: 8000
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: psv-worker
+    depends_on:
+      backend:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://psv:psv_secure_password@postgres:5432/psv_auditor
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+
+volumes:
+  pgdata:
+  rabbitdata:
