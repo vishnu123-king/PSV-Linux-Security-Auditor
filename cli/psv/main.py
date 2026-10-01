@@ -1,5 +1,12 @@
+import sys
+from pathlib import Path
 import typer
 from psv import __version__
+
+# Ensure backend package is discoverable
+for candidate in [Path.cwd(), Path(__file__).resolve().parent.parent.parent]:
+    if (candidate / "backend").is_dir() and str(candidate) not in sys.path:
+        sys.path.insert(0, str(candidate))
 from psv.commands.audits import app as audits_app
 from psv.commands.config import app as config_app
 from psv.commands.drift import app as drift_app
@@ -47,8 +54,16 @@ def start(
 ):
     """Start the FastAPI backend control plane server directly."""
     import uvicorn
+    app_dir = None
+    for candidate in [Path.cwd(), Path(__file__).resolve().parent.parent.parent]:
+        if (candidate / "backend").is_dir():
+            app_dir = str(candidate)
+            if app_dir not in sys.path:
+                sys.path.insert(0, app_dir)
+            break
+
     console.print(f"[bold green]Starting PSV Control Plane on http://{host}:{port}...[/bold green]")
-    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload, app_dir=app_dir)
 
 
 @cli_app.command("doctor")

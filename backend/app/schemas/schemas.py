@@ -1,6 +1,12 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+try:
+    import email_validator  # noqa: F401
+    from pydantic import EmailStr
+except Exception:
+    EmailStr = str  # type: ignore[assignment,misc]
 from backend.app.models.entities import (
     AssessmentStatus,
     FindingSeverity,

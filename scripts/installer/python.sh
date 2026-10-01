@@ -76,8 +76,8 @@ setup_python_environment() {
         python3 -m venv "${venv_dir}"
     fi
 
-    # Activate and upgrade core tooling including greenlet
-    "${venv_dir}/bin/python" -m pip install --upgrade pip setuptools wheel greenlet --quiet || true
+    # Activate and upgrade core tooling including greenlet and email-validator
+    "${venv_dir}/bin/python" -m pip install --upgrade pip setuptools wheel greenlet email-validator --quiet || true
 
     log_info "Installing PSV backend and CLI packages in editable mode..."
     cd "${install_dir}"

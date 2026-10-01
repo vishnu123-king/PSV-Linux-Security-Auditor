@@ -1,5 +1,6 @@
 import platform
 import sys
+from pathlib import Path
 import typer
 from psv.client import psv_client
 from psv.output import console, create_table, print_error, print_json, print_panel, print_success, print_warning
@@ -15,8 +16,16 @@ def start_server(
 ):
     """Start the FastAPI backend control plane server directly."""
     import uvicorn
+    app_dir = None
+    for candidate in [Path.cwd(), Path(__file__).resolve().parent.parent.parent.parent]:
+        if (candidate / "backend").is_dir():
+            app_dir = str(candidate)
+            if app_dir not in sys.path:
+                sys.path.insert(0, app_dir)
+            break
+
     console.print(f"[bold green]Starting PSV Control Plane on http://{host}:{port}...[/bold green]")
-    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("backend.app.main:app", host=host, port=port, reload=reload, app_dir=app_dir)
 
 
 @app.command("status")
