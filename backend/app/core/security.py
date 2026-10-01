@@ -17,6 +17,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from backend.app.core.config import get_settings
 
+import bcrypt
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Revoked JWT IDs or user logout cutoffs
@@ -31,11 +33,26 @@ LOCKOUT_UNTIL: Dict[str, float] = {}
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        password_bytes = plain_password.encode("utf-8")[:72]
+        hashed_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    except Exception:
+        try:
+            return pwd_context.verify(plain_password[:72], hashed_password)
+        except Exception:
+            return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    try:
+        password_bytes = password.encode("utf-8")[:72]
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+    except Exception:
+        return pwd_context.hash(password[:72])
 
 
 def validate_password_strength(password: str) -> Tuple[bool, str]:
